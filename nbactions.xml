@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+    <action>
+        <actionName>run</actionName>
+        <goals>
+            <goal>clean</goal>
+            <goal>process-classes</goal>
+            <goal>exec:java</goal>
+            
+        </goals>
+        <properties>
+            <exec.mainClass>jp.seraphyware.textencodechanger.MainApp</exec.mainClass>
+            
+        </properties>
+    </action>
+
+    <action>
+        <actionName>debug</actionName>
+        <goals>
+            <goal>clean</goal>
+            <goal>process-classes</goal>
+            <goal>exec:exec</goal>
+        </goals>
+        <properties>
+            <exec.executable>java</exec.executable>
+            <exec.args>-Xdebug -Xrunjdwp:transport=dt_socket,server=n,address=${jpda.address} -classpath %classpath jp.seraphyware.textencodechanger.MainApp</exec.args>
+            <jpda.listen>true</jpda.listen>
+        </properties>
+    </action>
+
+    <action>
+            <actionName>CUSTOM-exec</actionName>
+            <displayName>exec (en)</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>process-classes</goal>
+                <goal>exec:exec</goal>
+            </goals>
+            <properties>
+                <exec.executable>java</exec.executable>
+                
+                <exec.args>-Duser.language=en jp.seraphyware.textencodechanger.MainApp</exec.args>
+            </properties>
+        </action>
+
+    <action>
+            <actionName>CUSTOM-site</actionName>
+            <displayName>site</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>site</goal>
+            </goals>
+        </action>
+
+    <action>
+            <actionName>CUSTOM-test</actionName>
+            <displayName>test</displayName>
+            <goals>
+                <goal>test</goal>
+            </goals>
+        </action>
+
+</actions>
