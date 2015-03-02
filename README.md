@@ -18,6 +18,8 @@ JavaFX8を使用しているため、Java8以降のランタイムが必要で�
  
 ビルド方法
 ----------------
+[![Build Status](https://travis-ci.org/seraphy/TextEncodeChanger.svg)](https://travis-ci.org/seraphy/TextEncodeChanger)
+
 ビルドにはMavenが必要です。
 
 プロジェクトはNetBeans8で作成されました。
