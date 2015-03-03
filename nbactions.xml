@@ -29,35 +29,35 @@
     </action>
 
     <action>
-            <actionName>CUSTOM-exec</actionName>
-            <displayName>exec (en)</displayName>
-            <goals>
-                <goal>clean</goal>
-                <goal>process-classes</goal>
-                <goal>exec:exec</goal>
-            </goals>
-            <properties>
-                <exec.executable>java</exec.executable>
+        <actionName>CUSTOM-exec</actionName>
+        <displayName>exec (en)</displayName>
+        <goals>
+            <goal>clean</goal>
+            <goal>process-classes</goal>
+            <goal>exec:exec</goal>
+        </goals>
+        <properties>
+            <exec.executable>java</exec.executable>
                 
-                <exec.args>-Duser.language=en jp.seraphyware.textencodechanger.MainApp</exec.args>
-            </properties>
-        </action>
+            <exec.args>-Duser.language=en jp.seraphyware.textencodechanger.MainApp</exec.args>
+        </properties>
+    </action>
 
     <action>
-            <actionName>CUSTOM-site</actionName>
-            <displayName>site</displayName>
-            <goals>
-                <goal>clean</goal>
-                <goal>site</goal>
-            </goals>
-        </action>
+        <actionName>CUSTOM-site</actionName>
+        <displayName>site</displayName>
+        <goals>
+            <goal>clean</goal>
+            <goal>site</goal>
+        </goals>
+    </action>
 
     <action>
-            <actionName>CUSTOM-test</actionName>
-            <displayName>test</displayName>
-            <goals>
-                <goal>test</goal>
-            </goals>
-        </action>
+        <actionName>CUSTOM-test</actionName>
+        <displayName>test</displayName>
+        <goals>
+            <goal>test</goal>
+        </goals>
+    </action>
 
 </actions>

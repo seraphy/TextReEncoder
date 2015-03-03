@@ -9,17 +9,18 @@
 
     <name>TextEncodeChanger</name>
 
-    <description>
-        文字コード変換のGUIツール.
-        (JavaFX8 + Spring4 + Log4j2 の組み合わせの技術習得を兼ねて作成した.)
+    <description><![CDATA[
+        これはJavaFX8によるGUIの「テキストファイル文字コード変換ツール」です。
+        (JavaFX8 + Spring4 + Log4j2 の組み合わせの技術習得を兼ねて作成した。)
 
-        任意のフォルダを走査し,指定したパターンに合致する名前のテキストファイルを
-        読み込み,その文字コードを推定し,テーブルに結果を一覧表示する.
-        その後,テーブルで必要なファイルを選択し,指定した文字コードで変換して保存する.
+        任意のフォルダを走査し、指定したパターンに合致する名前のテキストファイルを
+        読み込み、その文字コードを推定し、テーブルに結果を一覧表示します。
+        その後、テーブルで必要なファイルを選択し、指定した文字コードで変換して保存します。
 
-        NetBeans8のプロジェクトである.
-        実行およびビルドにはJava8が必要である.
-    </description>
+        NetBeans8のプロジェクトです。
+        GUIのデザインにはScene Builder2を使用しています。
+        実行およびビルドにはJava8が必要です。
+    ]]></description>
 
     <url>https://github.com/seraphy/TextEncodeChanger.git</url>
 
@@ -181,6 +182,130 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.0</version>
             </plugin>
+
+            <!-- サイト設定 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+                <dependencies>
+                    <!-- markdownによるsiteのhtmlを構築可能とする -->
+                    <dependency>
+                        <groupId>org.apache.maven.doxia</groupId>
+                        <artifactId>doxia-module-markdown</artifactId>
+                        <version>1.6</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <locales>ja</locales>
+                    <inputEncoding>UTF-8</inputEncoding>
+                    <outputEncoding>UTF-8</outputEncoding>
+                    <reportPlugins>
+                        <!-- プロジェクト情報の出力 -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>2.8</version>
+                            <reportSets>
+                                <reportSet>
+                                    <reports>
+                                        <!-- プロジェクト情報 -->
+                                        <report>index</report>
+                                        <report>summary</report>
+                                        <report>license</report>
+                                        <report>scm</report>
+                                        <report>cim</report>
+                                        <report>issue-tracking</report>
+                                        <report>project-team</report>
+                                        <!-- リーリングリスト
+                                        <report>mailing-list</report>
+                                        -->
+                                        <!--
+                                        java8のクラスの依存関係をチェックすると警告が大量に発生する.
+                                        しかし機能はするようだ. (2015/2/25現在)
+                                        -->
+                                        <report>dependencies</report>
+                                        <report>dependency-convergence</report>
+                                        <report>dependency-management</report>
+                                        <!-- ビルドまわりの情報 -->
+                                        <report>plugin-management</report>
+                                        <report>plugins</report>
+                                    </reports>
+                                </reportSet>
+                            </reportSets>
+                        </plugin>
+                        <!-- JAVADOC -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>2.10.1</version>
+                            <reportSets>
+                                <reportSet>
+                                    <!--
+                                      本体側JAVADOCのみ生成 
+                                      UnitTest側は作成しない.
+                                      (生成できるがビルド時に警告がたくさんでる)
+                                    -->
+                                    <id>html</id>
+                                    <configuration>
+                                        <doctitle>My API for ${project.name} ${project.version}</doctitle>
+                                        <windowtitle>My API for ${project.name} ${project.version}</windowtitle>
+                                    </configuration>
+                                    <reports>
+                                        <report>javadoc</report>
+                                    </reports>
+                                </reportSet>
+                            </reportSets>
+                        </plugin>
+                        <!-- テストレポート -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-report-plugin</artifactId>
+                            <version>2.18.1</version>
+                        </plugin>
+                        <!--
+                            CheckStyleの設定.
+                            NewlineAtEndOfFileがうざいので, *.java, *.propertiesに対して,
+                            suppressions.xmlで除外指定している.
+                        -->
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-checkstyle-plugin</artifactId>
+                            <version>2.14</version>
+                            <configuration>
+                                <suppressionsLocation>suppressions.xml</suppressionsLocation>
+                                <configLocation>config/sun_checks.xml</configLocation>
+                            </configuration>
+                        </plugin>
+                        <!-- findbugs -->
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>findbugs-maven-plugin</artifactId>
+                            <version>3.0.0</version>
+                            <configuration>
+                                <effort>Max</effort>
+                                <xmlOutput>true</xmlOutput>
+                            </configuration>
+                        </plugin>
+                        <!-- PMD/CPD -->
+                        <plugin>
+                            <artifactId>maven-pmd-plugin</artifactId>
+                            <version>3.4</version>
+                            <configuration>
+                                <targetJdk>${maven.compiler.target}</targetJdk>
+                            </configuration>
+                            <reportSets>
+                                <reportSet>
+                                    <reports>
+                                        <report>pmd</report>
+                                        <report>cpd</report>
+                                    </reports>
+                                </reportSet>
+                            </reportSets>
+                        </plugin>
+                    </reportPlugins>        
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -266,110 +391,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <reporting>
-        <plugins>
-            <!-- プロジェクト情報の出力 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <!--
-                            java8のクラスの依存関係をチェックすると警告が大量に発生する.
-                            機能はするようだ. (2015/2/25現在)
-                            <report>dependencies</report>
-                            <report>dependency-convergence</report>
-                            <report>dependency-management</report>
-                            -->
-                            <report>index</report>
-                            <report>summary</report>
-                            <report>license</report>
-                            <report>scm</report>
-                            <report>cim</report>
-                            <report>issue-tracking</report>
-                            <report>project-team</report>
-                            <!-- リーリングリスト
-                            <report>mailing-list</report>
-                            -->
-                            <report>plugin-management</report>
-                            <report>plugins</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <!-- JAVADOC -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
-                <reportSets>
-                    <reportSet>
-                        <!--
-                          本体側JAVADOCのみ生成 
-                          UnitTest側は作成しない.
-                          (生成できるがビルド時に警告がたくさんでる)
-                        -->
-                        <id>html</id>
-                        <configuration>
-                            <doctitle>My API for ${project.name} ${project.version}</doctitle>
-                            <windowtitle>My API for ${project.name} ${project.version}</windowtitle>
-                        </configuration>
-                        <reports>
-                            <report>javadoc</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-            <!-- テストレポート -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.18.1</version>
-            </plugin>
-            <!--
-                CheckStyleの設定.
-                NewlineAtEndOfFileがうざいので, *.java, *.propertiesに対して,
-                suppressions.xmlで除外指定している.
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.14</version>
-                <configuration>
-                    <suppressionsLocation>suppressions.xml</suppressionsLocation>
-                    <configLocation>config/sun_checks.xml</configLocation>
-                </configuration>
-            </plugin>
-            <!-- findbugs -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <effort>Max</effort>
-                    <xmlOutput>true</xmlOutput>
-                </configuration>
-            </plugin>
-            <!-- PMD/CPD -->
-            <plugin>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.4</version>
-                <configuration>
-                    <targetJdk>${maven.compiler.target}</targetJdk>
-                </configuration>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>pmd</report>
-                            <report>cpd</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 
 </project>
