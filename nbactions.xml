@@ -39,7 +39,7 @@
         <properties>
             <exec.executable>java</exec.executable>
                 
-            <exec.args>-Duser.language=en jp.seraphyware.textencodechanger.MainApp</exec.args>
+            <exec.args>-Duser.language=en -classpath %classpath jp.seraphyware.textencodechanger.MainApp</exec.args>
         </properties>
     </action>
 
