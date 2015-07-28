@@ -6,7 +6,6 @@ import jp.seraphyware.textencodechanger.services.BackgroundTaskService;
 import jp.seraphyware.textencodechanger.services.FileWalkService;
 import java.io.File;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -37,6 +36,7 @@ import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import jp.seraphyware.textencodechanger.services.EncodingType;
 import jp.seraphyware.textencodechanger.services.FileWalkService.FileInfo;
 import jp.seraphyware.textencodechanger.services.FileWalkerCallable;
 import jp.seraphyware.textencodechanger.services.FileWalkerProgress;
@@ -146,7 +146,7 @@ public class MainWndController implements Initializable {
      * 文字コードの選択ドロップダウン.
      */
     @FXML
-    private ComboBox<String> comboEncoding;
+    private ComboBox<EncodingType> comboEncoding;
 
     /**
      * ファイルのテーブルビュー.
@@ -405,7 +405,7 @@ public class MainWndController implements Initializable {
         boolean recursive = model.recursiveProperty().get();
         String patterns = model.patternProperty().get();
 
-        String selEncoding = comboEncoding.getValue();
+        EncodingType selEncoding = comboEncoding.getValue();
 
         List<Pattern> regexps = fileWalkService.makePatterns(patterns);
         Path srcDir = Paths.get(srcDirStr);
@@ -503,8 +503,7 @@ public class MainWndController implements Initializable {
         TransferType transferType = model.transferTypeProperty().get();
         boolean reqBak = model.createBackupProperty().get();
 
-        String selEncodingStr = comboEncoding.getValue();
-        Charset selEncoding = Charset.forName(selEncodingStr);
+        EncodingType destEncoding = comboEncoding.getValue();
 
         Task<Integer> bgTask = new Task<Integer>() {
             @Override
@@ -517,7 +516,7 @@ public class MainWndController implements Initializable {
                                 destDir,
                                 transferType,
                                 reqBak,
-                                selEncoding);
+                                destEncoding);
 
                 int count = 0;
 
@@ -527,15 +526,12 @@ public class MainWndController implements Initializable {
                     }
 
                     String relativePath = fileItem.fileProperty().get();
-                    String srcEncodingName = fileItem.encodingProperty().get();
+                    EncodingType srcEncoding = fileItem.encodingProperty().get();
 
-                    if (srcEncodingName == null
-                            || srcEncodingName.length() == 0) {
+                    if (srcEncoding == null) {
                         log.warn("エンコードが不明のため対象外: " + fileItem);
                         continue;
                     }
-
-                    Charset srcEncoding = Charset.forName(srcEncodingName);
 
                     updateMessage(relativePath);
                     converter.convert(relativePath, srcEncoding);
@@ -545,7 +541,7 @@ public class MainWndController implements Initializable {
                         // bindingでチェックボックスを変更すると、テーブルカラムも変更されるため
                         // JavaFxのスレッドでの操作とする.
                         fileItem.selectProperty().set(false);
-                        fileItem.encodingProperty().set(selEncodingStr);
+                        fileItem.encodingProperty().set(destEncoding);
                     });
                     count++;
                 }

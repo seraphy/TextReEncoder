@@ -135,7 +135,7 @@ public class FileWalkService {
                             Path name = filePath.getFileName();
                             if (!attrs.isDirectory()) {
                                 if (fileNameMatcher.match(name)) {
-                                    String enc = encConvSrv.presumeEncoding(
+                                    EncodingType enc = encConvSrv.presumeEncoding(
                                             filePath);
                                     files.add(new FileInfo(filePath, enc));
                                 }
@@ -176,7 +176,7 @@ public class FileWalkService {
         /**
          * 文字コード.
          */
-        private final String encoding;
+        private final EncodingType encoding;
 
         /**
          * コンストラクタ.
@@ -184,7 +184,7 @@ public class FileWalkService {
          * @param encoding 文字コード
          */
         @SuppressWarnings("checkstyle:hiddenfield")
-        public FileInfo(final Path path, final String encoding) {
+        public FileInfo(final Path path, final EncodingType encoding) {
             Objects.requireNonNull(path);
 
             this.path = path;
@@ -203,7 +203,7 @@ public class FileWalkService {
          * 文字コード.
          * @return 文字コード.
          */
-        public String getEncoding() {
+        public EncodingType getEncoding() {
             return encoding;
         }
 

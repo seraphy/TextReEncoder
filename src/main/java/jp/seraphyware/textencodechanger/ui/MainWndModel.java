@@ -10,6 +10,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import jp.seraphyware.textencodechanger.services.EncodingType;
 
 /**
  * メインウィンドウのモデル.
@@ -38,14 +39,14 @@ public final class MainWndModel {
         /**
          * 文字コード.
          */
-        private final SimpleStringProperty encodingProperty =
-                new SimpleStringProperty();
+        private final SimpleObjectProperty<EncodingType> encodingProperty =
+                new SimpleObjectProperty<>();
 
         /**
          * 文字コード.
          * @return 文字コード
          */
-        public SimpleStringProperty encodingProperty() {
+        public SimpleObjectProperty<EncodingType> encodingProperty() {
             return encodingProperty;
         }
 
@@ -70,37 +71,37 @@ public final class MainWndModel {
      * 入力元ディレクトリ.
      */
     private final SimpleStringProperty inputProerty =
-            new SimpleStringProperty();
+            new SimpleStringProperty(this, "input");
 
     /**
      * 再帰的に検査するか？.
      */
     private final SimpleBooleanProperty recursiveProperty =
-            new SimpleBooleanProperty();
+            new SimpleBooleanProperty(this, "recursive", true);
 
     /**
      * 出力先ディレクトリ.
      */
     private final SimpleStringProperty outputProperty =
-            new SimpleStringProperty();
+            new SimpleStringProperty(this, "output");
 
     /**
      * 転送タイプ.
      */
     private final SimpleObjectProperty<TransferType> transferTypeProperty =
-            new SimpleObjectProperty<>();
+            new SimpleObjectProperty<>(this, "transferType", TransferType.COPY);
 
     /**
      * バックアップの要否.
      */
     private final SimpleBooleanProperty createBackupProperty =
-            new SimpleBooleanProperty();
+            new SimpleBooleanProperty(this, "createBackup", true);
 
     /**
      * ファイル名パターン.
      */
     private final SimpleStringProperty patternProperty =
-            new SimpleStringProperty();
+            new SimpleStringProperty(this, "pattern");
 
     /**
      * ファイルリスト.

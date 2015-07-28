@@ -1,8 +1,8 @@
 package jp.seraphyware.textencodechanger.services;
 
-import jp.seraphyware.textencodechanger.services.TextEncodeConvService;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.CharBuffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -46,10 +46,8 @@ public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests 
     @Test
     public void testGetEncodins() throws Exception {
         serivce.getEncodings().stream().
-                map((encoding) -> Charset.forName(encoding)).
-                forEach((cs) -> {
-                    System.out.println("cs=" + cs);
-                });
+                map(EncodingType::getCharset).
+                forEach(System.out::println);
     }
 
     /**
@@ -58,17 +56,29 @@ public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests 
      */
     @Test
     public void testPresumeEncoding() throws Exception {
-        for (String encoding : serivce.getEncodings()) {
+        check(EncodingType.UTF8, EncodingType.UTF8);
+        check(EncodingType.UTF8_BOM, EncodingType.UTF8_BOM);
+        check(EncodingType.Windows31J, EncodingType.Windows31J);
+        check(EncodingType.EUC_JP, EncodingType.EUC_JP);
+        check(EncodingType.UTF16_BOM_LE, EncodingType.UTF16_BOM_LE);
+        check(EncodingType.UTF16_BOM_BE, EncodingType.UTF16_BOM_BE);
+        
+        // UTF-16LE/BEは変換エラーになりにくく、どのようなコードでも受け入れるので
+        // 推定に使うのは難しい
+    }
+    
+    private void check(EncodingType encoding,
+            EncodingType resultEncodingType) throws IOException {
             // UTF-8, csWindows-31J, EUC_JPに変換した場合、
-            // それぞれ他方の文字コードでは表現できない文字を含むメッセージ
-            String message = "Hello,これは日本語です";
+        // それぞれ他方の文字コードでは表現できない文字を含むメッセージ
+        String message = "Hello,これは日本語です";
 
-            byte[] data = message.getBytes(encoding);
-            ByteBuffer byteBuf = ByteBuffer.wrap(data);
-            
-            String ret = serivce.presumeEncoding(byteBuf);
-            
-            Assert.assertEquals(ret, encoding);
-        }
+        byte[] data = encoding.encode(CharBuffer.wrap(message)).array();
+
+        ByteBuffer byteBuf = ByteBuffer.wrap(data);
+
+        EncodingType ret = serivce.presumeEncoding(byteBuf);
+
+        Assert.assertEquals(ret, resultEncodingType);
     }
 }

@@ -7,7 +7,6 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +15,10 @@ import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -36,21 +37,45 @@ public class TextEncodeConvService {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * 変換する文字コード一覧.
+     * 文字コード一覧
      */
-    private static final String[] ENCODINS = {
-        "UTF-8",
-        "Windows-31j",
-        "EUC_JP"
-    };
+    private List<EncodingType> encodingTypes;
+    
+    /**
+     * 文字コード一覧(検査順)
+     */
+    private List<EncodingType> checkEncodingOrder;
 
     /**
      * 文字コード一覧を返す.
      *
      * @return 対象とする文字コードのリスト
      */
-    public final List<String> getEncodings() {
-        return Arrays.asList(ENCODINS);
+    public final List<EncodingType> getEncodings() {
+        if (encodingTypes == null) {
+            encodingTypes = Collections.unmodifiableList(
+                    Arrays.asList(EncodingType.values()));
+        }
+        return encodingTypes;
+    }
+    
+    public List<EncodingType> getCheckEncodingOrder() {
+        if (checkEncodingOrder == null) {
+            checkEncodingOrder = getEncodings().stream()
+                    .sorted((a, b) -> {
+                // BOMつきの場合を優先してチェックする.
+                // (JavaAPIはBOM有無にかかわらず読み込むため、先にBOM有無を判定させる)
+                int bom_a = (a.getBOMLength() != 0) ? 1 : 0;
+                int bom_b = (b.getBOMLength() != 0) ? 1 : 0;
+                int ret = bom_b - bom_a;
+                if (ret == 0) {
+                    // BOM有、BOM無同士であれば、定義順で判定する。
+                    ret = a.ordinal() - b.ordinal();
+                }
+                return ret;
+            }).collect(Collectors.toList());
+        }
+        return checkEncodingOrder;
     }
 
     /**
@@ -60,7 +85,7 @@ public class TextEncodeConvService {
      * @return 文字コード
      * @throws IOException 失敗
      */
-    public final String presumeEncoding(final Path file) throws IOException {
+    public final EncodingType presumeEncoding(final Path file) throws IOException {
         Objects.requireNonNull(file);
 
         log.debug("load: " + file);
@@ -77,30 +102,28 @@ public class TextEncodeConvService {
      * @return 文字コード
      * @throws IOException 失敗
      */
-    public final String presumeEncoding(
+    public final EncodingType presumeEncoding(
             final ByteBuffer byteBuf
     ) throws IOException {
         Objects.requireNonNull(byteBuf);
 
-        String encodingOk = null;
-        for (String encStr : ENCODINS) {
-            Charset cs = Charset.forName(encStr);
+        EncodingType encodingOk = null;
+        for (EncodingType enc : getCheckEncodingOrder()) {
+            Charset cs = enc.getCharset();
             CharsetDecoder dec = cs.newDecoder();
             dec.onUnmappableCharacter(CodingErrorAction.REPORT);
             dec.onMalformedInput(CodingErrorAction.REPORT);
 
-            try {
-                // 再読み込みのために位置を巻き戻す
-                byteBuf.rewind();
-
-                // 読み込みを試行する.
-                dec.decode(byteBuf);
-                encodingOk = encStr;
+            // 再読み込みのために位置を巻き戻す
+            byteBuf.rewind();
+            
+            // エンコード可能か検証する
+            if (enc.checkEncodable(byteBuf)) {
+                encodingOk = enc;
                 break;
 
-            } catch (CharacterCodingException ex) {
-                // 変換エラーが生じた場合
-                log.info("coding error: " + ex);
+            } else {
+                log.info("coding error: " + enc);
             }
         }
         log.debug("-" + encodingOk);
@@ -122,7 +145,7 @@ public class TextEncodeConvService {
          */
         void convert(
                 String relativePathStr,
-                Charset srcEncoding
+                EncodingType srcEncoding
         ) throws IOException;
     }
 
@@ -141,7 +164,7 @@ public class TextEncodeConvService {
             final String destDir,
             final TransferType transferType,
             final boolean reqBak,
-            final Charset destEncoding
+            final EncodingType destEncoding
     ) {
         Objects.requireNonNull(srcDir);
         Objects.requireNonNull(destEncoding);
@@ -221,8 +244,8 @@ public class TextEncodeConvService {
      */
     public final ByteBuffer readConvertedText(
             final byte[] data,
-            final Charset srcEncoding,
-            final Charset destEncoding
+            final EncodingType srcEncoding,
+            final EncodingType destEncoding
     ) throws CharacterCodingException {
         Objects.requireNonNull(data);
         Objects.requireNonNull(srcEncoding);
@@ -230,12 +253,9 @@ public class TextEncodeConvService {
 
         // 文字データの取得
         ByteBuffer byteBuf = ByteBuffer.wrap(data);
-        CharsetDecoder dec = srcEncoding.newDecoder();
-        CharBuffer charBuf = dec.decode(byteBuf);
+        CharBuffer charBuf = srcEncoding.decode(byteBuf);
 
         // エンコードしなおしてバイト列に変換
-        CharsetEncoder enc = destEncoding.newEncoder();
-        ByteBuffer outData = enc.encode(charBuf);
-        return outData;
+        return destEncoding.encode(charBuf);
     }
 }
