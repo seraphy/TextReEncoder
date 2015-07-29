@@ -1,3 +1,7 @@
 .button {
     -fx-font-weight: bold;
 }
+
+.table-view:focused .table-row-cell:filled:selected .hyperlink {
+   -fx-text-fill: yellow;
+}

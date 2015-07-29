@@ -1,9 +1,11 @@
 package jp.seraphyware.textencodechanger;
 
+import java.awt.SplashScreen;
 import jp.seraphyware.textencodechanger.ui.ScreensConfiguration;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.stage.Stage;
+import javax.swing.SwingUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.
@@ -50,6 +52,21 @@ public final class MainApp extends Application {
                 ScreensConfiguration.class);
         screens.setPrimaryStage(stage);
         screens.mainWindow().show();
+        
+        // スプラッシュが表示されていれば非表示にする
+        SwingUtilities.invokeLater(() -> {
+            try {
+                SplashScreen splashScreen = SplashScreen.getSplashScreen();
+                if (splashScreen != null) {
+                    // スプラッシュを閉じる
+                    splashScreen.close();
+                }
+            }
+            catch (Exception ex) {
+                // スプラッシュ関連のエラーは致命的ではないので継続してよい
+                ex.printStackTrace(System.err);
+            }
+        });
     }
 
     /**

@@ -47,10 +47,15 @@
             <Label alignment="CENTER_RIGHT" text="%pattern" GridPane.rowIndex="2" />
             <TextField fx:id="txtPattern" GridPane.columnIndex="1" GridPane.rowIndex="2" />
             <Label text="%transMode" GridPane.rowIndex="3" />
-            <HBox alignment="BASELINE_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" GridPane.valignment="CENTER" GridPane.vgrow="SOMETIMES">
+            <HBox alignment="BASELINE_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.halignment="CENTER" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" GridPane.valignment="CENTER" GridPane.vgrow="SOMETIMES">
                <children>
                   <ComboBox fx:id="comboTransferType" />
-                  <CheckBox fx:id="chkBackup" mnemonicParsing="false" text="%backup" />
+                  <Label text="%overwriteMode">
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
+                  </Label>
+                  <ComboBox fx:id="comboOverwriteMode" />
                </children>
             </HBox>
             <Label alignment="CENTER_RIGHT" text="%output" GridPane.rowIndex="4" />

@@ -1,5 +1,6 @@
 package jp.seraphyware.textencodechanger.ui;
 
+import java.util.Objects;
 import jp.seraphyware.textencodechanger.services.TransferType;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
@@ -11,6 +12,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jp.seraphyware.textencodechanger.services.EncodingType;
+import jp.seraphyware.textencodechanger.services.OverwriteMode;
 
 /**
  * メインウィンドウのモデル.
@@ -66,19 +68,7 @@ public final class MainWndModel {
             return selectProperty;
         }
     }
-
-    /**
-     * 入力元ディレクトリ.
-     */
-    private final SimpleStringProperty inputProerty =
-            new SimpleStringProperty(this, "input");
-
-    /**
-     * 再帰的に検査するか？.
-     */
-    private final SimpleBooleanProperty recursiveProperty =
-            new SimpleBooleanProperty(this, "recursive", true);
-
+    
     /**
      * 出力先ディレクトリ.
      */
@@ -92,16 +82,10 @@ public final class MainWndModel {
             new SimpleObjectProperty<>(this, "transferType", TransferType.COPY);
 
     /**
-     * バックアップの要否.
+     * 上書きモード.
      */
-    private final SimpleBooleanProperty createBackupProperty =
-            new SimpleBooleanProperty(this, "createBackup", true);
-
-    /**
-     * ファイル名パターン.
-     */
-    private final SimpleStringProperty patternProperty =
-            new SimpleStringProperty(this, "pattern");
+    private final SimpleObjectProperty<OverwriteMode> overwriteModeProperty =
+            new SimpleObjectProperty<>(this, "overwriteMode", OverwriteMode.OVERWRITE);
 
     /**
      * ファイルリスト.
@@ -110,21 +94,6 @@ public final class MainWndModel {
             FXCollections.observableArrayList(
                 (FileItem i) -> new Observable[]{i.selectProperty()});
 
-    /**
-     * 入力ディレクトリ.
-     * @return 入力ディレクトリ.
-     */
-    public StringProperty inputProerty() {
-        return inputProerty;
-    }
-
-    /**
-     * 再帰的に検査するか？.
-     * @return 再帰的に検査するか？
-     */
-    public BooleanProperty recursiveProperty() {
-        return recursiveProperty;
-    }
 
     /**
      * 出力先ディレクトリ.
@@ -135,19 +104,11 @@ public final class MainWndModel {
     }
 
     /**
-     * ファイル名のパターン.
-     * @return ファイル名のパターン
+     * 上書きモード
+     * @return 上書きモード
      */
-    public StringProperty patternProperty() {
-        return patternProperty;
-    }
-
-    /**
-     * バックアップの要否.
-     * @return バックアップの要否
-     */
-    public BooleanProperty createBackupProperty() {
-        return createBackupProperty;
+    public ObjectProperty<OverwriteMode> overwriteModeProperty() {
+        return overwriteModeProperty;
     }
 
     /**

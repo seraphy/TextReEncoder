@@ -155,6 +155,8 @@
                                 <argument>${project.build.directory}</argument>
                                 <argument>-outfile</argument>
                                 <argument>${project.build.finalName}.jar</argument>
+                                <argument>-manifestAttrs</argument>
+                                <argument>Splashscreen-Image=splash_picture.png</argument>
                             </arguments>
                         </configuration>
                     </execution>

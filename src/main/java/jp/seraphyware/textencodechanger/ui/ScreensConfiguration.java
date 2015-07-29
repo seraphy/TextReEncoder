@@ -153,7 +153,55 @@ public class ScreensConfiguration {
         return progStg;
     }
 
+    /**
+     * プレビューダイアログを作成するファクトリ
+     * @return * プレビューダイアログを作成するファクトリ
+     */
+    @Bean
+    @SuppressWarnings("checkstyle:designforextension")
+    public TextPreviewDialogFactory textPreviewDialogFactory() {
+        return (parent, title, text, fileName, encoding) -> 
+                textPreviewDialog(parent, title, text, fileName, encoding);
+    }
 
+    /**
+     * プレビューダイアログ
+     * @param parent
+     * @param title
+     * @param text
+     * @param fileName
+     * @param encoding
+     * @return 
+     */
+    private Stage textPreviewDialog(
+            final Window parent,
+            final String title,
+            final String text,
+            final String fileName,
+            final String encoding
+    ) {
+        try {
+            Stage stg = new Stage(StageStyle.UTILITY);
+            stg.initOwner(parent);
+
+            TextPreviewController controller
+                    = loadStage(stg, TextPreviewController.class);
+            stg.setTitle(title);
+
+            controller.textProperty().set(text);
+            controller.fileNameProperty().set(fileName);
+            controller.encodingProperty().set(encoding);
+
+            stg.setOnCloseRequest(p -> stg.close());
+
+            return stg;
+
+        } catch (IOException iex) {
+            throw new UncheckedIOException(iex);
+        }
+    }
+    
+    
     /**
      * エラーダイアログを作成するファクトリを返す.
      *

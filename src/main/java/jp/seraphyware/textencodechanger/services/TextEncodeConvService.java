@@ -141,9 +141,10 @@ public class TextEncodeConvService {
          *
          * @param relativePathStr 相対パス
          * @param srcEncoding ファイルの文字コード
+         * @return 変換が行われた場合はtrue、スキップされた場合はfalse
          * @throws IOException 失敗
          */
-        void convert(
+        boolean convert(
                 String relativePathStr,
                 EncodingType srcEncoding
         ) throws IOException;
@@ -155,7 +156,7 @@ public class TextEncodeConvService {
      * @param srcDir 入力元ディレクトリ
      * @param destDir 出力先ディレクトリ
      * @param transferType 転送モード
-     * @param reqBak バックアップの要否
+     * @param overwriteMode 上書きモード
      * @param destEncoding 出力文字コード
      * @return コンバータ
      */
@@ -163,7 +164,7 @@ public class TextEncodeConvService {
             final String srcDir,
             final String destDir,
             final TransferType transferType,
-            final boolean reqBak,
+            final OverwriteMode overwriteMode,
             final EncodingType destEncoding
     ) {
         Objects.requireNonNull(srcDir);
@@ -207,15 +208,21 @@ public class TextEncodeConvService {
                 }
             }
 
-            if (reqBak) {
-                // 相手先パスが既存であり、且つ、バックアップが必要な場合は
-                // 拡張子を.bakとしたファイルにリネームしておく
-                Path bakPath = dest.resolveSibling(
-                        dest.getFileName().toString() + ".bak");
-                if (Files.exists(bakPath)) {
-                    Files.delete(bakPath);
+            if (Files.exists(dest)) {
+                if (overwriteMode == OverwriteMode.CREATE_BACKUP) {
+                    // 相手先パスが既存であり、且つ、バックアップが必要な場合は
+                    // 拡張子を.bakとしたファイルにリネームしておく
+                    Path bakPath = dest.resolveSibling(
+                            dest.getFileName().toString() + ".bak");
+                    if (Files.exists(bakPath)) {
+                        Files.delete(bakPath);
+                    }
+                    Files.move(dest, bakPath);
+
+                } else if (overwriteMode == OverwriteMode.SKIP) {
+                    // 何もせずスキップする.
+                    return false;
                 }
-                Files.move(dest, bakPath);
             }
 
             if (transferType == TransferType.MOVE && !dest.equals(src)) {
@@ -230,7 +237,44 @@ public class TextEncodeConvService {
                     CREATE, TRUNCATE_EXISTING, WRITE)) {
                 outCh.write(outData);
             }
+            return true;
         };
+    }
+
+    /**
+     * テキストの読み込み
+     * @param data バイトデータ
+     * @param srcEncoding 文字コード
+     * @return 変換されたテキスト
+     * @throws CharacterCodingException 読み込みに失敗
+     */
+    public final CharBuffer readText(
+            final byte[] data,
+            final EncodingType srcEncoding
+    ) throws CharacterCodingException {
+        Objects.requireNonNull(data);
+        Objects.requireNonNull(srcEncoding);
+
+        // 文字データの取得
+        ByteBuffer byteBuf = ByteBuffer.wrap(data);
+        return srcEncoding.decode(byteBuf);
+    }
+    
+    /**
+     * テキストの書き込み
+     * @param charBuf 書き込むテキスト
+     * @param destEncoding 文字コード
+     * @return 変換されたバイトバッファ
+     * @throws CharacterCodingException 書き込みに失敗
+     */
+    public final ByteBuffer writeBytes(
+            final CharBuffer charBuf,
+            final EncodingType destEncoding
+    ) throws CharacterCodingException {
+        Objects.requireNonNull(charBuf);
+        Objects.requireNonNull(destEncoding);
+        
+        return destEncoding.encode(charBuf);
     }
 
     /**
@@ -251,11 +295,6 @@ public class TextEncodeConvService {
         Objects.requireNonNull(srcEncoding);
         Objects.requireNonNull(destEncoding);
 
-        // 文字データの取得
-        ByteBuffer byteBuf = ByteBuffer.wrap(data);
-        CharBuffer charBuf = srcEncoding.decode(byteBuf);
-
-        // エンコードしなおしてバイト列に変換
-        return destEncoding.encode(charBuf);
+        return writeBytes(readText(data, srcEncoding), destEncoding);
     }
 }
