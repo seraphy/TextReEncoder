@@ -17,13 +17,13 @@ public interface FileWalkerCallable
      *
      * @param callback コールバック、不要ならnull可
      */
-    void setProgressCallback(FileWalkerProgress callback);
+    void setProgressCallback(ProgressCallback callback);
 
     /**
      * 進行状況の通知を受けるコールバックの取得.
      *
      * @return コールバック、未設定ならnull
      */
-    FileWalkerProgress getProgressCallback();
+    ProgressCallback getProgressCallback();
 
 }

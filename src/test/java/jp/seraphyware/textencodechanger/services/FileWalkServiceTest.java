@@ -1,6 +1,5 @@
 package jp.seraphyware.textencodechanger.services;
 
-import jp.seraphyware.textencodechanger.services.FileWalkService;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -26,25 +25,41 @@ public class FileWalkServiceTest extends AbstractTestNGSpringContextTests {
     @Autowired
     private FileWalkService service;
     
-    public FileWalkServiceTest() {
-    }
-
+    /**
+     * クラス準備
+     * @throws Exception 
+     */
     @BeforeClass
     public static void setUpClass() throws Exception {
     }
 
+    /**
+     * クラスの後始末
+     * @throws Exception 
+     */
     @AfterClass
     public static void tearDownClass() throws Exception {
     }
 
+    /**
+     * テスト準備
+     * @throws Exception 
+     */
     @BeforeMethod
     public void setUpMethod() throws Exception {
     }
 
+    /**
+     * テストの後始末
+     * @throws Exception 
+     */
     @AfterMethod
     public void tearDownMethod() throws Exception {
     }
-    
+
+    /**
+     * ファイルパターンのテスト
+     */
     @Test
     public void testMakePatterns() {
         Assert.assertTrue(service.makePatterns("").isEmpty());
@@ -75,6 +90,9 @@ public class FileWalkServiceTest extends AbstractTestNGSpringContextTests {
         }
     }
     
+    /**
+     * ファイル名マッチングのテスト
+     */
     @Test
     public void testCreateFileNameMatcher() {
         List<Pattern> pattern1 = service.makePatterns("AB*;x?z");

@@ -1,53 +1,63 @@
 package jp.seraphyware.textencodechanger.ui;
 
+import jp.seraphyware.textencodechanger.ui.common.CenteredOverrunHyperlinkTableCell;
+import jp.seraphyware.textencodechanger.services.TaskBridge;
 import jp.seraphyware.textencodechanger.services.TransferType;
 import jp.seraphyware.textencodechanger.services.TextEncodeConvService;
 import jp.seraphyware.textencodechanger.services.BackgroundTaskService;
 import jp.seraphyware.textencodechanger.services.FileWalkService;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
-import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.binding.IntegerBinding;
+import javafx.beans.binding.LongBinding;
+import javafx.beans.binding.ObjectBinding;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Hyperlink;
-import javafx.scene.control.OverrunStyle;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
+import javax.inject.Inject;
+import javax.inject.Provider;
 import jp.seraphyware.textencodechanger.services.EncodingType;
 import jp.seraphyware.textencodechanger.services.FileWalkService.FileInfo;
 import jp.seraphyware.textencodechanger.services.FileWalkerCallable;
-import jp.seraphyware.textencodechanger.services.FileWalkerProgress;
 import jp.seraphyware.textencodechanger.services.OverwriteMode;
 import jp.seraphyware.textencodechanger.services.SearchCondition;
 import org.slf4j.Logger;
@@ -61,31 +71,29 @@ import org.springframework.stereotype.Component;
  * @author seraphy
  */
 @Component
-@FXMLController
-public class MainWndController implements Initializable {
+public class MainWndController extends SimpleWindowController implements Initializable {
 
     /**
      * ロガー.
      */
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    protected static final Logger log = LoggerFactory.getLogger(MainWndController.class);
 
+    /**
+     * リソース.
+     */
+    private ResourceBundle res;
+    
     /**
      * プログレスダイアログを作成するファクトリ.
      */
-    @Autowired
-    private ProgressStageFactory progressStageFactory;
+    @Inject
+    private Provider<ProgressController> progressCtrlProv;
 
     /**
-     * プレビューダイアログを作成するファクトリ.
+     * テキストプレビューダイアログを取得するためのプロバイダー.
      */
-    @Autowired
-    private TextPreviewDialogFactory textPreviewDialogFactory;
-    
-    /**
-     * エラーダイアログを作成するファクトリ.
-     */
-    @Autowired
-    private ErrorDialogFactory errorDialogFactory;
+    @Inject
+    private Provider<TextPreviewController> textPrevCtrlProv;
 
     /**
      * ファイルツリーをトラバーサルするサービス.
@@ -97,7 +105,7 @@ public class MainWndController implements Initializable {
      * テキストの文字コード変換のサービス.
      */
     @Autowired
-    private TextEncodeConvService encodeConvService;
+    protected TextEncodeConvService encodeConvService;
 
     /**
      * バックグラウンドでタスクを実行するためのサービス.
@@ -108,7 +116,7 @@ public class MainWndController implements Initializable {
     /**
      * モデル.
      */
-    private final MainWndModel model = new MainWndModel();
+    protected final MainWndModel model = new MainWndModel();
     
     /**
      * 検索条件
@@ -119,12 +127,6 @@ public class MainWndController implements Initializable {
      * 最後に使用した検索条件
      */
     private final SearchCondition lastUseSearchCondition = new SearchCondition();
-
-    /**
-     * シーンコンテナ.
-     */
-    @FXML
-    private Parent parent;
 
     /**
      * 入力元テキストボックス.
@@ -167,6 +169,12 @@ public class MainWndController implements Initializable {
      */
     @FXML
     private Button btnBrowseOutputDir;
+    
+    /**
+     * サーチボックス
+     */
+    @FXML
+    private TextField txtSearch;
 
     /**
      * 文字コードの選択ドロップダウン.
@@ -196,7 +204,19 @@ public class MainWndController implements Initializable {
      * ファイルの文字コードカラム.
      */
     @FXML
-    private TableColumn<MainWndModel.FileItem, String> colEncoding;
+    private TableColumn<MainWndModel.FileItem, EncodingType> colEncoding;
+
+    /**
+     * ファイルのサイズ
+     */
+    @FXML
+    private TableColumn<MainWndModel.FileItem, Long> colSize;
+
+        /**
+     * ファイルの最終更新日
+     */
+    @FXML
+    private TableColumn<MainWndModel.FileItem, FileTime> colLastModified;
 
     /**
      * チェック開始ボタン.
@@ -226,79 +246,21 @@ public class MainWndController implements Initializable {
     private IntFunction<Alert> createConvertCompleteDialog;
 
     /**
-     * テキストの真ん中を省略表示するハイパーリンク式のテーブルセル用クラスの定義.
-     *
-     * @param <T>
-     * @param <S>
+     * フィルタ済みリスト.
      */
-    private static class CenteredOverrunHyperlinkTableCell<T, S>
-            extends TableCell<T, S> {
+    private FilteredList<MainWndModel.FileItem> filteredItems;
+    
+    /**
+     * ソート連携リスト.
+     */
+    private SortedList<MainWndModel.FileItem> sortedItems;
+    
 
-        private final Hyperlink hyperlink = new Hyperlink();
-        
-        /**
-         * コンストラクタ.
-         */
-        public CenteredOverrunHyperlinkTableCell() {
-            this(null);
-        }
-
-        /**
-         * 省略文字を指定して構築するコンストラクタ.
-         * @param ellipsisString 省略文字.
-         */
-        public CenteredOverrunHyperlinkTableCell(final String ellipsisString) {
-            super();
-            
-            hyperlink.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-            if (ellipsisString != null) {
-                hyperlink.setEllipsisString(ellipsisString);
-            }
-        }
-
-        /**
-         * 文字列表現.
-         * @param item アイテム
-         * @param empty 空であるか？
-         */
-        @Override
-        protected void updateItem(final S item, final boolean empty) {
-            super.updateItem(item, empty);
-            String text;
-            if (item == null) {
-                text = "";
-            } else {
-                text = item.toString();
-            }
-            
-            hyperlink.setText(text);
-            hyperlink.setVisited(false);
-
-            EventHandler<ActionEvent> eh = getActionEventHandler();
-            hyperlink.setOnAction(eh);
-
-            setGraphic(hyperlink);
-        }
-
-        private final ObjectProperty<Callback<Integer, EventHandler<ActionEvent>>>
-                actionEventHandlerCallback = new SimpleObjectProperty<>(this, "actionEventHandlerCallback");
-
-        public final ObjectProperty<Callback<Integer, EventHandler<ActionEvent>>>
-            actionEventHandlerCallbackProperty() {
-		return actionEventHandlerCallback;
-	}
-
-        private Callback<Integer, EventHandler<ActionEvent>>
-            getActionEventHandlerCallback() {
-		return actionEventHandlerCallbackProperty().get();
-	}
-
-        private EventHandler<ActionEvent> getActionEventHandler() {
-            return getActionEventHandlerCallback() != null ? getActionEventHandlerCallback()
-                    .call(getIndex()) : null;
-        }
+    @Override
+    public void onCloseRequest(WindowEvent event) {
+        closeWindow();
     }
-
+    
     /**
      * 初期化.
      *
@@ -306,7 +268,9 @@ public class MainWndController implements Initializable {
      * @param rb リソースバンドル
      */
     @Override
-    public final void initialize(final URL url, final ResourceBundle rb) {
+    public final void initialize(URL url, ResourceBundle rb) {
+        this.res = rb;
+        
         // 画面とモデルをバインドする.
         txtInput.textProperty().bindBidirectional(searchCondition.inputProerty());
         chkRecursive.selectedProperty().bindBidirectional(
@@ -328,20 +292,59 @@ public class MainWndController implements Initializable {
                 )
         );
 
-        // 「変換」ボタンは、検索済みでないか、あるいは、出力先が設定されず、
-        // 且つ上書きでない場合、または選択がない場合は不可
+        // チェックされているファイル数
+        LongBinding checkedCountBinding = new LongBinding() {
+            {
+                bind(model.getFileItems());
+            }
+            @Override
+            protected long computeValue() {
+                return model.getFileItems().stream().filter(
+                        item -> item.selectProperty().get())
+                        .collect(Collectors.counting());
+            }
+        };
+
+        // 「変換」ボタンは、ファイル選択済みでないか、あるいは、出力先が設定されず、
+        // 且つ上書きでない場合は不可
         btnConvert.disableProperty().bind(Bindings.or(
-                lastUseSearchCondition.inputProerty().isEmpty(),
-                Bindings.and(
+                checkedCountBinding.lessThan(1), // チェック数が1未満の場合
+                Bindings.and( // または、上書きでない場合で出力先が指定ない場合
                         model.outputProperty().isEmpty(),
                         model.transferTypeProperty().
-                        isNotEqualTo(TransferType.REPLACE)
+                            isNotEqualTo(TransferType.REPLACE)
                 )
         ));
 
         // テーブルの列とデータのバインド.
         tblFiles.setPlaceholder(new Text(rb.getString("emptyRow")));
-        tblFiles.setItems(model.getFileItems());
+
+        // サーチボックスが変更された場合に設定するフィルタのプリディケータ
+        ObjectBinding<Predicate<MainWndModel.FileItem>> predicateBiding =
+                new ObjectBinding<Predicate<MainWndModel.FileItem>>() {
+                    
+            {
+                bind(txtSearch.textProperty());
+            }
+
+            @Override
+            protected Predicate<MainWndModel.FileItem> computeValue() {
+                String search = txtSearch.getText();
+                if (search != null && search.trim().length() == 0) {
+                    return item -> true;
+                }
+                return (item) -> item.fileProperty().get().contains(search);
+            }
+        };
+        
+        // フィルタ済みリスト
+        filteredItems = new FilteredList<>(model.getFileItems());
+        filteredItems.predicateProperty().bind(predicateBiding);
+        
+        // ソート済みリストとテーブルを連結する
+        sortedItems = new SortedList<>(filteredItems);
+        sortedItems.comparatorProperty().bind(tblFiles.comparatorProperty());
+        tblFiles.setItems(sortedItems);
 
         colSelect.setCellFactory(CheckBoxTableCell.forTableColumn(colSelect));
         colSelect.setCellValueFactory(new PropertyValueFactory<>("select"));
@@ -352,14 +355,32 @@ public class MainWndController implements Initializable {
             cell.actionEventHandlerCallbackProperty().set(
                     (Callback<Integer, EventHandler<ActionEvent>>) (Integer idx) -> {
                         return (evt) -> {
-                            openFile(tblFiles.getItems().get(idx));
+                            openFile(sortedItems.get(idx));
                         };
             });
+            cell.linkDisabledStateCallbackProperty().set(
+                    (Callback<Integer, ObservableValue<Boolean>>) (Integer idx) -> {
+                        return sortedItems.get(idx).convertedProperty();
+                    });
             return cell;
         });
         colName.setCellValueFactory(new PropertyValueFactory<>("file"));
+        
+        colSize.setCellValueFactory(new PropertyValueFactory<>("size"));
+        colLastModified.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
 
         colEncoding.setCellValueFactory(new PropertyValueFactory<>("encoding"));
+        colEncoding.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<EncodingType>() {
+            @Override
+            public String toString(EncodingType object) {
+                return object == null ? "" : object.getDisplayString();
+            }
+
+            @Override
+            public EncodingType fromString(String string) {
+                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        }));
 
         // 文字コード選択コンボボックスを設定する.
         comboEncoding.setItems(FXCollections.observableArrayList(
@@ -370,7 +391,7 @@ public class MainWndController implements Initializable {
         comboTransferType.setConverter(new StringConverter<TransferType>() {
             @Override
             public String toString(final TransferType object) {
-                return rb.getString("comboTransferType." + object.name());
+                return res.getString("comboTransferType." + object.name());
             }
 
             @Override
@@ -391,7 +412,7 @@ public class MainWndController implements Initializable {
         comboOverwriteMode.setConverter(new StringConverter<OverwriteMode>() {
             @Override
             public String toString(OverwriteMode object) {
-                return rb.getString("comboOverwriteMode." + object.name());
+                return res.getString("comboOverwriteMode." + object.name());
             }
             @Override
             public OverwriteMode fromString(String string) {
@@ -418,6 +439,20 @@ public class MainWndController implements Initializable {
         searchCondition.inputProerty().addListener(e -> clearFiles());
         searchCondition.recursiveProperty().addListener(e -> clearFiles());
 
+        // 結果アイテム数
+        IntegerBinding sizeBinding = new IntegerBinding() {
+            {
+                bind(model.getFileItems());
+            }
+            @Override
+            protected int computeValue() {
+                return model.getFileItems().size();
+            }
+        };
+
+        // 結果がある場合のみサーチを有効化する
+        txtSearch.disableProperty().bind(sizeBinding.isEqualTo(0));
+        
         // 完了ダイアログのファクトリを作成する.
         createConvertCompleteDialog = (count) -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -432,36 +467,37 @@ public class MainWndController implements Initializable {
         Platform.runLater(() -> txtInput.requestFocus());
     }
 
+    /**
+     * ファイルのプレビューダイアログを開く
+     * @param fileInfo 
+     */
     protected void openFile(MainWndModel.FileItem fileInfo) {
         try {
             String file = fileInfo.fileProperty().get();
             String srcDir = lastUseSearchCondition.inputProerty().get();
-
-            EncodingType encoding = fileInfo.encodingProperty().get();
-            if (encoding == null) {
-                // ファイルの文字コードが不明な場合は出力予定の文字コードで試行する.
-                encoding = comboEncoding.getValue();
-            }
-            
             Path filePath = Paths.get(srcDir, file);
-            byte[] data = Files.readAllBytes(filePath);
             
-            CharBuffer textBuf = encodeConvService.readText(data, encoding);
-            StringBuilder buf = new StringBuilder();
-            buf.append(textBuf);
-            
-            Stage stg = textPreviewDialogFactory.textPreviewDialog(
-                    parent.getScene().getWindow(), "Preview",
-                    buf.toString(), filePath.toString(), encoding.name());
-            stg.show();
+            TextPreviewController textPrevCtrl = textPrevCtrlProv.get();
+            textPrevCtrl.textFilePathProperty().set(filePath);
 
-        } catch (Exception ex) {
+            textPrevCtrl.encodingProperty().set(fileInfo.encodingProperty().get());
+            textPrevCtrl.fallbackEncodingProperty().set(comboEncoding.getValue());
+            
+            Stage stg = textPrevCtrl.getStage();
+            textPrevCtrl.showTextFile();
+
+            stg.showAndWait();
+            
+            EncodingType encType = textPrevCtrl.getResult();
+            if (encType != null) {
+                fileInfo.encodingProperty().set(encType);
+            }
+
+        } catch (Throwable ex) {
             log.error("ワーカーの失敗: " + ex, ex);
 
             // エラーダイアログの表示
-            Stage errorDlg = errorDialogFactory.createErrorDialog(
-                    parent.getScene().getWindow(), "ERROR", ex);
-            errorDlg.showAndWait();
+            ErrorDialogUtils.showException(getStage(), ex);
         }
     }
     
@@ -470,6 +506,7 @@ public class MainWndController implements Initializable {
      */
     private void clearFiles() {
         model.getFileItems().clear();
+        txtSearch.clear();
     }
 
     /**
@@ -486,7 +523,7 @@ public class MainWndController implements Initializable {
                 dcInput.setInitialDirectory(dir);
             }
         }
-        File selectedDir = dcInput.showDialog(parent.getScene().getWindow());
+        File selectedDir = dcInput.showDialog(getStage());
         if (selectedDir != null) {
             txtInput.setText(selectedDir.getAbsolutePath());
             txtInput.requestFocus();
@@ -507,13 +544,15 @@ public class MainWndController implements Initializable {
         if (outDir != null && !outDir.isEmpty()) {
             dcOutput.setInitialDirectory(new File(outDir));
         }
-        File selectedDir = dcOutput.showDialog(parent.getScene().getWindow());
+        File selectedDir = dcOutput.showDialog(getStage());
         if (selectedDir != null) {
             txtOutput.setText(selectedDir.getAbsolutePath());
             txtOutput.requestFocus();
         }
     }
 
+    
+    
     /**
      * ソースディレクトリの走査とファイルの文字コードの推定処理の開始ボタン.
      *
@@ -538,30 +577,18 @@ public class MainWndController implements Initializable {
                 fileWalkService.createCallable(srcDir, recursive, regexps);
 
         // ワーカーを、JavaFX UIスレッドとの連携用タスクと接続する.
-        Task<List<FileInfo>> bgTask = new Task<List<FileInfo>>() {
-            @Override
-            protected List<FileInfo> call() throws Exception {
-                FileWalkerProgress progressCallback =
-                        new FileWalkerProgress() {
-                    @Override
-                    public void setMessage(final String message) {
-                        updateMessage(message);
-                    }
-                    @Override
-                    public void setTitle(final String title) {
-                        updateTitle(title);
-                    }
-                };
+        Task<List<FileInfo>> bgTask = new TaskBridge<>((progressCallback) -> {
                 fileWalker.setProgressCallback(progressCallback);
                 return fileWalker.call();
-            }
-        };
+        });
 
         // タスクを実行する.
         bgTaskSerive.execute(bgTask);
 
         // プログレスダイアログ
-        Stage progStg = progressStageFactory.createProgressStage(bgTask);
+        ProgressController progressCtrl = progressCtrlProv.get();
+        progressCtrl.connect(bgTask);
+        Stage progStg = progressCtrl.getStage();
         if (!bgTask.isDone()) {
             progStg.showAndWait();
         } else {
@@ -582,10 +609,34 @@ public class MainWndController implements Initializable {
                     Path filePath = fileInfo.getPath();
                     Path relativePath = srcDir.relativize(filePath);
 
+                    // パスの表示は相対パスとする.
+                    item.fileProperty().set(relativePath.toString());
+
+                    // ファイルの属性を取得する
+                    BasicFileAttributeView attrView =
+                            Files.getFileAttributeView(filePath,
+                                    BasicFileAttributeView.class);
+                    if (attrView != null) {
+                        try {
+                            BasicFileAttributes attr = attrView.readAttributes();
+                            
+                            item.sizeProperty().set(attr.size());
+                            item.lastModifiedProperty().set(
+                                    attr.lastModifiedTime());
+                        }
+                        catch (IOException ex) {
+                            throw new UncheckedIOException(ex);
+                        }
+                    }
+                    
+                    // 推定文字コード
+                    item.encodingProperty().set(fileInfo.getEncoding());
+
+                    // ファイルの推定文字コードとターゲットの文字コードが
+                    // 一致しなければ、自動的に選択状態とする.
                     item.selectProperty().set(
                             !selEncoding.equals(fileInfo.getEncoding()));
-                    item.fileProperty().set(relativePath.toString());
-                    item.encodingProperty().set(fileInfo.getEncoding());
+
                     return item;
                 }).collect(Collectors.toList());
 
@@ -601,10 +652,8 @@ public class MainWndController implements Initializable {
             log.error("ワーカーの失敗: " + ex, ex);
 
             // エラーダイアログの表示
-            Stage errorDlg = errorDialogFactory.createErrorDialog(
-                    parent.getScene().getWindow(), "ERROR", ex);
-            errorDlg.showAndWait();
-        }
+             ErrorDialogUtils.showException(getStage(), ex);
+       }
     }
 
     /**
@@ -663,7 +712,13 @@ public class MainWndController implements Initializable {
                             // bindingでチェックボックスを変更すると、テーブルカラムも変更されるため
                             // JavaFxのスレッドでの操作とする.
                             fileItem.selectProperty().set(false);
+                            
+                            // 変更した文字コードに表示を切り替える
                             fileItem.encodingProperty().set(destEncoding);
+                            
+                            // 文字コードが変更されているので元ファイルは開かないように
+                            // ディセーブルにする.
+                            fileItem.convertedProperty().set(true);
                         });
                         count++;
                     }
@@ -674,7 +729,9 @@ public class MainWndController implements Initializable {
 
         bgTaskSerive.execute(bgTask);
 
-        Stage progStg = progressStageFactory.createProgressStage(bgTask);
+        ProgressController progressCtrl = progressCtrlProv.get();
+        progressCtrl.connect(bgTask);
+        Stage progStg = progressCtrl.getStage();
         if (!bgTask.isDone()) {
             progStg.showAndWait();
 
@@ -691,9 +748,7 @@ public class MainWndController implements Initializable {
             }
 
         } catch (RuntimeException | InterruptedException | ExecutionException ex) {
-            Stage errorDlg = errorDialogFactory.createErrorDialog(
-                    parent.getScene().getWindow(), "ERROR", ex);
-            errorDlg.showAndWait();
+            ErrorDialogUtils.showException(getStage(), ex);
         }
     }
 }

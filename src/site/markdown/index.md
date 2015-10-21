@@ -18,7 +18,7 @@
 
 ## リリース
 
-https://github.com/seraphy/TextEncodeChanger/releases
+https://github.com/seraphy/TextReEncoder/releases
 
 
 ## ビルド方法

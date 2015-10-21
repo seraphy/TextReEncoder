@@ -22,7 +22,7 @@ public class BackgroundTaskService {
     /**
      * ロガー.
      */
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(BackgroundTaskService.class);
 
     /**
      * スレッドサービス.
@@ -33,7 +33,7 @@ public class BackgroundTaskService {
      * 初期化.
      */
     @PostConstruct
-    public final void init() {
+    public void init() {
         log.info("★FileWalkService#init");
         executor = Executors.newFixedThreadPool(1);
     }
@@ -42,7 +42,7 @@ public class BackgroundTaskService {
      * 破棄処理.
      */
     @PreDestroy
-    public final void dispose() {
+    public void dispose() {
         log.info("★FileWalkService#dispose");
         executor.shutdownNow();
     }
@@ -54,7 +54,7 @@ public class BackgroundTaskService {
      * @param task タスク
      * @return Future
      */
-    public final <V> Future<V> execute(final Callable<V> task) {
+    public <V> Future<V> execute(final Callable<V> task) {
         Objects.requireNonNull(task);
         return executor.submit(task);
     }
@@ -64,7 +64,7 @@ public class BackgroundTaskService {
      *
      * @param task タスク
      */
-    public final void execute(final Runnable task) {
+    public void execute(final Runnable task) {
         Objects.requireNonNull(task);
         executor.execute(task);
     }

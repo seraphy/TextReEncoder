@@ -15,19 +15,55 @@ import java.nio.charset.CodingErrorAction;
  * @author seraphy
  */
 public enum EncodingType {
-    UTF8(Charset.forName("UTF-8"), null),
-    UTF8_BOM(Charset.forName("UTF-8"), new byte[]{(byte) 0xef, (byte) 0xbb, (byte) 0xbf}),
-    Windows31J(Charset.forName("Windows-31j"), null),
-    EUC_JP(Charset.forName("EUC_JP"), null),
-    UTF16_BOM_LE(Charset.forName("UTF-16LE"), new byte[]{(byte) 0xff, (byte) 0xfe}),
-    UTF16_BOM_BE(Charset.forName("UTF-16BE"), new byte[]{(byte) 0xfe, (byte) 0xff}),
-    UTF16_LE(Charset.forName("UTF-16LE"), null), // なんでも合致しやすく推定は困難
-    UTF16_BE(Charset.forName("UTF-16BE"), null); // なんでも合致しやすく推定は困難
+    /**
+     * UTF-8
+     */
+    UTF8(Charset.forName("UTF-8"), "UTF-8", null),
+    
+    /**
+     * UTF-8のBOM付き
+     */
+    UTF8_BOM(Charset.forName("UTF-8"), "UTF-8 (BOM)", new byte[]{(byte) 0xef, (byte) 0xbb, (byte) 0xbf}),
+    
+    /**
+     * SJIS(MS932/Windows31J)
+     */
+    Windows31J(Charset.forName("Windows-31J"), "Windows-31J", null),
+    
+    /**
+     * EUC_JP
+     */
+    EUC_JP(Charset.forName("EUC-JP"), "EUC-JP", null),
+    
+    /**
+     * UTF-16のBOM付き(Little Endian)
+     */
+    UTF16_BOM_LE(Charset.forName("UTF-16LE"), "UTF-16 LE (BOM)", new byte[]{(byte) 0xff, (byte) 0xfe}),
+    
+    /**
+     * UTF-16のBOM付き(Big Endian)
+     */
+    UTF16_BOM_BE(Charset.forName("UTF-16BE"), "UTF-16 BE (BOM)", new byte[]{(byte) 0xfe, (byte) 0xff}),
+    
+    /**
+     * UTF16のLittle Endian
+     */
+    UTF16_LE(Charset.forName("UTF-16LE"), "UTF-16 LE", null), // なんでも合致しやすく推定は困難
+    
+    /**
+     * UTF-16のBig Endian
+     */
+    UTF16_BE(Charset.forName("UTF-16BE"), "UTF-16 BE", null); // なんでも合致しやすく推定は困難
 
     /**
      * 文字コード
      */
     private final Charset cs;
+    
+    /**
+     * 表示文字列
+     */
+    private final String displayString;
     
     /**
      * BOMの定義、なければnull
@@ -39,8 +75,9 @@ public enum EncodingType {
      * @param cs 文字コード
      * @param bom BOMの定義、なければnull
      */
-    EncodingType(Charset cs, byte[] bom) {
+    EncodingType(Charset cs, String displayString, byte[] bom) {
         this.cs = cs;
+        this.displayString = displayString;
         this.bom = bom;
     }
     
@@ -50,6 +87,14 @@ public enum EncodingType {
      */
     public Charset getCharset() {
         return cs;
+    }
+    
+    /**
+     * 表示する文字列
+     * @return 
+     */
+    public String getDisplayString() {
+        return displayString;
     }
     
     /**

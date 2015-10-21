@@ -7,9 +7,18 @@ package jp.seraphyware.textencodechanger.services;
  */
 public enum OverwriteMode {
     
+    /**
+     * 上書きする
+     */
     OVERWRITE,
 
+    /**
+     * バックアップを作成する
+     */
     CREATE_BACKUP,
    
+    /**
+     * 上書きせずスキップする
+     */
     SKIP
 }

@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>jp.seraphyware</groupId>
-    <artifactId>TextEncodeChanger</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <artifactId>TextReEncoder</artifactId>
+    <version>1.2-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>TextEncodeChanger</name>
+    <name>TextReEncoder</name>
 
     <description><![CDATA[
         これはJavaFX8によるGUIの「テキストファイル文字コード変換ツール」です。
@@ -22,7 +22,7 @@
         実行およびビルドにはJava8が必要です。
     ]]></description>
 
-    <url>https://github.com/seraphy/TextEncodeChanger.git</url>
+    <url>https://github.com/seraphy/TextReEncoder.git</url>
 
     <organization>
         <name>seraphyware.jp</name>
@@ -30,21 +30,21 @@
     </organization>
 
     <scm>
-        <connection>scm:git:https://github.com/seraphy/TextEncodeChanger.git</connection>
-        <developerConnection>scm:git:https://github.com/seraphy/TextEncodeChanger.git</developerConnection>
+        <connection>scm:git:https://github.com/seraphy/TextReEncoder.git</connection>
+        <developerConnection>scm:git:https://github.com/seraphy/TextReEncoder.git</developerConnection>
         <tag>HEAD</tag>
-        <url>https://github.com/seraphy/TextEncodeChanger</url>
+        <url>https://github.com/seraphy/TextReEncoder</url>
     </scm>
 
     <!-- 継続的インテグレーションシステム -->
     <ciManagement>
         <system>travis-ci</system>
-        <url>https://travis-ci.org/seraphy/TextEncodeChanger</url>
+        <url>https://travis-ci.org/seraphy/TextReEncoder</url>
     </ciManagement>
 
     <!-- 課題追跡システム -->
     <issueManagement>
-        <url>https://github.com/seraphy/TextEncodeChanger/issues</url>
+        <url>https://github.com/seraphy/TextReEncoder/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
@@ -334,6 +334,14 @@
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- JSR330 Support 
+        Springは、これを検出すると Inject, Provider, Instanceなどを有効とする -->
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
         </dependency>
 
         <!-- SLF4j -->

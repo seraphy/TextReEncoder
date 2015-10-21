@@ -32,9 +32,9 @@ public class SearchCondition {
      */
     public void copyTo(SearchCondition output) {
         Objects.requireNonNull(output);
-        output.inputProerty.set(inputProerty.get());
-        output.recursiveProperty.set(recursiveProperty.get());
-        output.patternProperty.set(patternProperty.get());
+        output.inputProerty().set(inputProerty.get());
+        output.recursiveProperty().set(recursiveProperty.get());
+        output.patternProperty().set(patternProperty.get());
     }
 
     /**

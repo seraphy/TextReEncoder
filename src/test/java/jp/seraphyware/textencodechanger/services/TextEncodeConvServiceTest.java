@@ -20,21 +20,34 @@ public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests 
     @Autowired
     private TextEncodeConvService serivce;
     
-    public TextEncodeConvServiceTest() {
-    }
-
+    /**
+     * クラス準備
+     * @throws Exception 
+     */
     @org.testng.annotations.BeforeClass
     public static void setUpClass() throws Exception {
     }
 
+    /**
+     * クラスの後始末
+     * @throws Exception 
+     */
     @org.testng.annotations.AfterClass
     public static void tearDownClass() throws Exception {
     }
 
+    /**
+     * テスト準備
+     * @throws Exception 
+     */
     @org.testng.annotations.BeforeMethod
     public void setUpMethod() throws Exception {
     }
 
+    /**
+     * テストの後始末
+     * @throws Exception 
+     */
     @org.testng.annotations.AfterMethod
     public void tearDownMethod() throws Exception {
     }
@@ -51,7 +64,7 @@ public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests 
     }
 
     /**
-     * テキストの文字コード推定のテスト
+     * サポートするテキストの文字コード推定のテスト
      * @throws Exception 失敗
      */
     @Test
@@ -67,9 +80,16 @@ public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests 
         // 推定に使うのは難しい
     }
     
+    /**
+     * 文字コードのテストが正しく判定されるか検査する
+     * @param encoding
+     * @param resultEncodingType
+     * @throws IOException 
+     */
     private void check(EncodingType encoding,
             EncodingType resultEncodingType) throws IOException {
-            // UTF-8, csWindows-31J, EUC_JPに変換した場合、
+       
+        // UTF-8, csWindows-31J, EUC_JPに変換した場合、
         // それぞれ他方の文字コードでは表現できない文字を含むメッセージ
         String message = "Hello,これは日本語です";
 

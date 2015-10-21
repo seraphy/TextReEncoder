@@ -1,7 +1,6 @@
 package jp.seraphyware.textencodechanger.services;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -31,7 +30,7 @@ public class FileWalkService {
     /**
      * ロガー.
      */
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(FileWalkService.class);
 
     /**
      * テキストの文字コード変換のサービス.
@@ -90,12 +89,11 @@ public class FileWalkService {
      * @param patterns パターン
      * @return ファイル名のマッチングオブジェクト
      */
-    public final FileNameMatcher createFileNameMatcher(
-            final List<Pattern> patterns) {
+    public FileNameMatcher createFileNameMatcher(List<Pattern> patterns) {
         Objects.requireNonNull(patterns);
 
-        return (FileNameMatcher & Serializable) (name) -> patterns.stream().
-                anyMatch(pattern -> pattern.matcher(name.toString()).matches());
+        return (name) -> patterns.stream().anyMatch(
+                pattern -> pattern.matcher(name.toString()).matches());
     }
 
     /**
@@ -238,7 +236,7 @@ public class FileWalkService {
             /**
              * 通知を受けるコールバック
              */
-            private FileWalkerProgress progressCallback;
+            private ProgressCallback progressCallback;
 
             /**
              * 進行状況の通知を受けるコールバックの設定.
@@ -247,7 +245,7 @@ public class FileWalkService {
              */
             @Override
             public void setProgressCallback(
-                    final FileWalkerProgress callback
+                    final ProgressCallback callback
             ) {
                 this.progressCallback = callback;
             }
@@ -258,7 +256,7 @@ public class FileWalkService {
              * @return コールバック、未設定ならnull
              */
             @Override
-            public FileWalkerProgress getProgressCallback() {
+            public ProgressCallback getProgressCallback() {
                 return progressCallback;
             }
 
@@ -290,13 +288,13 @@ public class FileWalkService {
 
             private void updateMessage(final String message) {
                 if (progressCallback != null) {
-                    progressCallback.setMessage(message);
+                    progressCallback.updateMessage(message);
                 }
             }
 
             private void updateTitle(final String title) {
                 if (progressCallback != null) {
-                    progressCallback.setTitle(title);
+                    progressCallback.updateTitle(title);
                 }
             }
 

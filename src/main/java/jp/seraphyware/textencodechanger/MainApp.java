@@ -1,11 +1,11 @@
 package jp.seraphyware.textencodechanger;
 
 import java.awt.SplashScreen;
-import jp.seraphyware.textencodechanger.ui.ScreensConfiguration;
 import javafx.application.Application;
 import static javafx.application.Application.launch;
 import javafx.stage.Stage;
 import javax.swing.SwingUtilities;
+import jp.seraphyware.textencodechanger.ui.MainWndController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.
@@ -16,12 +16,12 @@ import org.springframework.context.annotation.
  *
  * @author seraphy
  */
-public final class MainApp extends Application {
+public class MainApp extends Application {
 
     /**
      * ロガー.
      */
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(MainApp.class);
 
     /**
      * Springのコンテキスト.
@@ -47,11 +47,10 @@ public final class MainApp extends Application {
         context.scan("jp.seraphyware.ui"); // スキャンによる方法
         context.refresh();
 
-        // スクリーン
-        ScreensConfiguration screens = context.getBean(
-                ScreensConfiguration.class);
-        screens.setPrimaryStage(stage);
-        screens.mainWindow().show();
+        // メインウィンドウの表示
+        MainWndController mainWindow = context.getBean(MainWndController.class);
+        Stage stg = mainWindow.getStage();
+        stg.show();
         
         // スプラッシュが表示されていれば非表示にする
         SwingUtilities.invokeLater(() -> {

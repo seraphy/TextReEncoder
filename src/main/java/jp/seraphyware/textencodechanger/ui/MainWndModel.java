@@ -1,11 +1,13 @@
 package jp.seraphyware.textencodechanger.ui;
 
-import java.util.Objects;
+import java.nio.file.attribute.FileTime;
 import jp.seraphyware.textencodechanger.services.TransferType;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.LongProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -31,6 +33,18 @@ public final class MainWndModel {
          */
         private final SimpleStringProperty fileProperty =
                 new SimpleStringProperty();
+        
+        /**
+         * ファイルサイズ.
+         */
+        private final SimpleLongProperty sizeProperty =
+                new SimpleLongProperty();
+
+        /**
+         * 最終更新日.
+         */
+        private final SimpleObjectProperty<FileTime> lastModifiedProperty =
+                new SimpleObjectProperty<>();
 
         /**
          * 選択状態.
@@ -43,12 +57,18 @@ public final class MainWndModel {
          */
         private final SimpleObjectProperty<EncodingType> encodingProperty =
                 new SimpleObjectProperty<>();
+        
+        /**
+         * 変換済みフラグ.
+         */
+        private final SimpleBooleanProperty convertedProperty =
+                new SimpleBooleanProperty();
 
         /**
          * 文字コード.
          * @return 文字コード
          */
-        public SimpleObjectProperty<EncodingType> encodingProperty() {
+        public ObjectProperty<EncodingType> encodingProperty() {
             return encodingProperty;
         }
 
@@ -56,16 +76,40 @@ public final class MainWndModel {
          * ファイル.
          * @return ファイル.
          */
-        public SimpleStringProperty fileProperty() {
+        public StringProperty fileProperty() {
             return fileProperty;
+        }
+        
+        /**
+         * ファイルサイズ.
+         * @return 
+         */
+        public LongProperty sizeProperty() {
+            return sizeProperty;
+        }
+        
+        /**
+         * 最終更新日.
+         * @return 
+         */
+        public ObjectProperty<FileTime> lastModifiedProperty() {
+            return lastModifiedProperty;
         }
 
         /**
          * 選択状態.
          * @return 選択状態.
          */
-        public SimpleBooleanProperty selectProperty() {
+        public BooleanProperty selectProperty() {
             return selectProperty;
+        }
+        
+        /**
+         * 変換状態.
+         * @return 
+         */
+        public BooleanProperty convertedProperty() {
+            return convertedProperty;
         }
     }
     
@@ -90,9 +134,11 @@ public final class MainWndModel {
     /**
      * ファイルリスト.
      */
-    private final ObservableList<FileItem> fileItems =
-            FXCollections.observableArrayList(
-                (FileItem i) -> new Observable[]{i.selectProperty()});
+    private final ObservableList<FileItem> fileItems
+            = FXCollections.observableArrayList(
+                    (FileItem i) -> new Observable[]{
+                        i.selectProperty()
+                    });
 
 
     /**

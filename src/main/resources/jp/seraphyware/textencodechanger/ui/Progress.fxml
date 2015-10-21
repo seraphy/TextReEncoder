@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefWidth="300.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="jp.seraphyware.textencodechanger.ui.ProgressController">
+    <stylesheets>
+        <URL value="@Styles.css" />
+    </stylesheets>
+    <children>
+        <Label fx:id="txtStatus" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" text="%lbl.message.initial" VBox.vgrow="NEVER" />
+        <ProgressIndicator fx:id="progress" minHeight="25.0" minWidth="25.0" prefHeight="50.0" prefWidth="50.0" VBox.vgrow="ALWAYS">
+            <VBox.margin>
+                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+            </VBox.margin>
+        </ProgressIndicator>
+        <HBox alignment="CENTER" VBox.vgrow="NEVER">
+            <children>
+                <Button mnemonicParsing="false" onAction="#onCancel" text="%btn.cancel" />
+            </children>
+        </HBox>
+    </children>
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+    </padding>
+</VBox>

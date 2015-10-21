@@ -34,35 +34,19 @@ public class TextEncodeConvService {
     /**
      * ロガー.
      */
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private static final Logger log = LoggerFactory.getLogger(TextEncodeConvService.class);
 
     /**
      * 文字コード一覧
      */
-    private List<EncodingType> encodingTypes;
+    private static final List<EncodingType> encodingTypes = Collections
+            .unmodifiableList(Arrays.asList(EncodingType.values()));
     
     /**
      * 文字コード一覧(検査順)
      */
-    private List<EncodingType> checkEncodingOrder;
-
-    /**
-     * 文字コード一覧を返す.
-     *
-     * @return 対象とする文字コードのリスト
-     */
-    public final List<EncodingType> getEncodings() {
-        if (encodingTypes == null) {
-            encodingTypes = Collections.unmodifiableList(
-                    Arrays.asList(EncodingType.values()));
-        }
-        return encodingTypes;
-    }
-    
-    public List<EncodingType> getCheckEncodingOrder() {
-        if (checkEncodingOrder == null) {
-            checkEncodingOrder = getEncodings().stream()
-                    .sorted((a, b) -> {
+    private static final List<EncodingType> checkEncodingOrder = encodingTypes
+            .stream().sorted((a, b) -> {
                 // BOMつきの場合を優先してチェックする.
                 // (JavaAPIはBOM有無にかかわらず読み込むため、先にBOM有無を判定させる)
                 int bom_a = (a.getBOMLength() != 0) ? 1 : 0;
@@ -74,7 +58,21 @@ public class TextEncodeConvService {
                 }
                 return ret;
             }).collect(Collectors.toList());
-        }
+
+    /**
+     * 文字コード一覧を返す.
+     *
+     * @return 対象とする文字コードのリスト
+     */
+    public List<EncodingType> getEncodings() {
+        return encodingTypes;
+    }
+    
+    /**
+     * 文字コード検査順序での文字コードのリストを返す.
+     * @return  検査順序の文字コードのリスト
+     */
+    public List<EncodingType> getCheckEncodingOrder() {
         return checkEncodingOrder;
     }
 
@@ -85,7 +83,7 @@ public class TextEncodeConvService {
      * @return 文字コード
      * @throws IOException 失敗
      */
-    public final EncodingType presumeEncoding(final Path file) throws IOException {
+    public EncodingType presumeEncoding(final Path file) throws IOException {
         Objects.requireNonNull(file);
 
         log.debug("load: " + file);
@@ -102,7 +100,7 @@ public class TextEncodeConvService {
      * @return 文字コード
      * @throws IOException 失敗
      */
-    public final EncodingType presumeEncoding(
+    public EncodingType presumeEncoding(
             final ByteBuffer byteBuf
     ) throws IOException {
         Objects.requireNonNull(byteBuf);
@@ -160,7 +158,7 @@ public class TextEncodeConvService {
      * @param destEncoding 出力文字コード
      * @return コンバータ
      */
-    public final FileEncodingConverter createFileEncodingConverter(
+    public FileEncodingConverter createFileEncodingConverter(
             final String srcDir,
             final String destDir,
             final TransferType transferType,
@@ -248,7 +246,7 @@ public class TextEncodeConvService {
      * @return 変換されたテキスト
      * @throws CharacterCodingException 読み込みに失敗
      */
-    public final CharBuffer readText(
+    public CharBuffer readText(
             final byte[] data,
             final EncodingType srcEncoding
     ) throws CharacterCodingException {
@@ -267,7 +265,7 @@ public class TextEncodeConvService {
      * @return 変換されたバイトバッファ
      * @throws CharacterCodingException 書き込みに失敗
      */
-    public final ByteBuffer writeBytes(
+    public ByteBuffer writeBytes(
             final CharBuffer charBuf,
             final EncodingType destEncoding
     ) throws CharacterCodingException {
@@ -286,7 +284,7 @@ public class TextEncodeConvService {
      * @return 変換後のバイト列
      * @throws CharacterCodingException 文字コードの変換に失敗
      */
-    public final ByteBuffer readConvertedText(
+    public ByteBuffer readConvertedText(
             final byte[] data,
             final EncodingType srcEncoding,
             final EncodingType destEncoding
