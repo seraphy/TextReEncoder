@@ -5,6 +5,9 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -70,6 +73,23 @@ public class ProgressController extends SimpleWindowController {
     }
     
     /**
+     *  タスクが完了または失敗またはキャンセルされた場合にダイアログを自動的に閉じるハンドラ.
+     */
+    private final EventHandler<? super WorkerStateEvent> eventFilter = p -> {
+        EventType<? extends Event> evt = p.getEventType();
+        if (evt.equals(WorkerStateEvent.WORKER_STATE_SUCCEEDED)) {
+            logger.info("★successed");
+            closeWindow();
+        } else if (evt.equals(WorkerStateEvent.WORKER_STATE_FAILED)) {
+            logger.info("★failed");
+            closeWindow();
+        } else if (evt.equals(WorkerStateEvent.WORKER_STATE_CANCELLED)) {
+            logger.info("★cancelled");
+            closeWindow();
+        }
+    };
+ 
+    /**
      * プログレスダイアログとタスクを関連づける.
      * 関連づけることによりタスクの終了によりプログレスウィンドウを閉じるなどの処理ができる.
      * @param bgTask 
@@ -83,18 +103,18 @@ public class ProgressController extends SimpleWindowController {
         txtStatus.textProperty().bind(bgTask.messageProperty());
         progress.progressProperty().bind(bgTask.progressProperty());
         
-        // タスクが完了または失敗またはキャンセルされた場合にダイアログを自動的に閉じる
-        bgTask.addEventFilter(WorkerStateEvent.WORKER_STATE_SUCCEEDED, p -> {
-            logger.info("★successed");
-            closeWindow();
-        });
-        bgTask.addEventFilter(WorkerStateEvent.WORKER_STATE_FAILED, p -> {
-            logger.info("★failed");
-            closeWindow();
-        });
-        bgTask.addEventFilter(WorkerStateEvent.WORKER_STATE_CANCELLED, p -> {
-            logger.info("★cancelled");
-            closeWindow();
-        });
+        bgTask.addEventFilter(WorkerStateEvent.ANY, eventFilter);
+    }
+    
+    public void disconnect() {
+        Objects.requireNonNull(bgTask);
+        if (bgTask != null) {
+            titleProperty.unbind();
+            txtStatus.textProperty().unbind();
+            progress.progressProperty().unbind();
+            
+            bgTask.removeEventFilter(WorkerStateEvent.ANY, eventFilter);
+            bgTask = null;
+        }
     }
 }

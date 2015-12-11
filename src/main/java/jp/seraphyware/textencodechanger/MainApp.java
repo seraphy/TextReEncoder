@@ -29,14 +29,12 @@ public class MainApp extends Application {
     private AnnotationConfigApplicationContext context;
 
     /**
-     * JavaFXアプリケーションの開始時に呼び出される.
-     *
-     * @param stage
-     * @throws Exception なんらかの失敗
+     * JavaFXアプリケーションの初期化時に呼び出される.
+     * @throws Exception 
      */
     @Override
-    public void start(final Stage stage) throws Exception {
-        log.info("★MainApp::start");
+    public void init() throws Exception {
+        log.info("★MainApp::init");
 
         // Springのコンテキストを作成する.
         // JavaFXのlaunchにより、JavaFXスレッド上でコンテキストを構築する.
@@ -46,6 +44,17 @@ public class MainApp extends Application {
         context.scan("jp.seraphyware.services"); // スキャンによる方法
         context.scan("jp.seraphyware.ui"); // スキャンによる方法
         context.refresh();
+    }
+
+    /**
+     * JavaFXアプリケーションの開始時に呼び出される.
+     *
+     * @param stage
+     * @throws Exception なんらかの失敗
+     */
+    @Override
+    public void start(final Stage stage) throws Exception {
+        log.info("★MainApp::start");
 
         // メインウィンドウの表示
         MainWndController mainWindow = context.getBean(MainWndController.class);
@@ -78,9 +87,8 @@ public class MainApp extends Application {
         log.info("★MainApp::stop");
         // コンテキストを終了する.
         context.close();
-        super.stop();
     }
-
+    
     /**
      * The main() method is ignored in correctly deployed JavaFX application.
      * main() serves only as fallback in case the application can not be

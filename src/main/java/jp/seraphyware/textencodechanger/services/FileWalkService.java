@@ -2,6 +2,8 @@ package jp.seraphyware.textencodechanger.services;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -39,9 +41,14 @@ public class FileWalkService {
     private TextEncodeConvService encConvSrv;
 
     /**
+     * 行末タイプの変換サービス.
+     */
+    @Autowired(required = true)
+    private TextTermConvService termConvSrv;
+
+    /**
      * ファイルのパターンマッチ文字列から正規表現のパターンをリストとして返す.
-     * ファイルのパターンは0文字以上の任意を「*」、任意の一文字を「?」として、
-     * 複数のパターンはセミコロンによって区切ります.
+     * ファイルのパターンは0文字以上の任意を「*」、任意の一文字を「?」として、 複数のパターンはセミコロンによって区切ります.
      * 前後の空白はパターンとして無視されます. 大文字小文字の違いは無視されます.
      *
      * @param patterns ファイルのパターンマッチ、セミコロン区切り
@@ -120,42 +127,65 @@ public class FileWalkService {
                 limit = 1;
             }
 
+            SimpleFileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(
+                        final Path filePath,
+                        final BasicFileAttributes attrs
+                ) throws IOException {
+                    Path name = filePath.getFileName();
+                    if (!attrs.isDirectory()) {
+                        if (fileNameMatcher.match(name)) {
+                            // ファイルの読み取り
+                            log.debug("load: " + filePath);
+                            byte[] data = Files.readAllBytes(filePath);
+                            ByteBuffer byteBuf = ByteBuffer.wrap(data);
+
+                            // 文字コードの推定
+                            EncodingType enc = encConvSrv
+                                    .presumeEncoding(byteBuf);
+
+                            // 行末タイプの推定
+                            TextTermType term = TextTermType.UNKNOWN;
+                            if (enc != null) {
+                                try {
+                                    CharBuffer charBuf = encConvSrv.readText(
+                                            data, enc);
+                                    term = termConvSrv.presumeTermType(charBuf);
+                                } catch (IOException ex) {
+                                    log.warn("can't decode text." + filePath +
+                                            "|enc=" + enc);
+                                }
+                            }
+
+                            files.add(new FileInfo(filePath, enc, term));
+                        }
+                        if (!predicate.test(filePath, attrs)) {
+                            return FileVisitResult.TERMINATE;
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult preVisitDirectory(
+                        final Path dir,
+                        final BasicFileAttributes attrs
+                ) throws IOException {
+                    if (!predicate.test(dir, attrs)) {
+                        return FileVisitResult.TERMINATE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            };
+            
             Files.walkFileTree(
                     srcDir,
                     EnumSet.noneOf(FileVisitOption.class),
                     limit,
-                    new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(
-                                final Path filePath,
-                                final BasicFileAttributes attrs
-                        ) throws IOException {
-                            Path name = filePath.getFileName();
-                            if (!attrs.isDirectory()) {
-                                if (fileNameMatcher.match(name)) {
-                                    EncodingType enc = encConvSrv.presumeEncoding(
-                                            filePath);
-                                    files.add(new FileInfo(filePath, enc));
-                                }
-                                if (!predicate.test(filePath, attrs)) {
-                                    return FileVisitResult.TERMINATE;
-                                }
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-
-                        @Override
-                        public FileVisitResult preVisitDirectory(
-                                final Path dir,
-                                final BasicFileAttributes attrs
-                        ) throws IOException {
-                            if (!predicate.test(dir, attrs)) {
-                                return FileVisitResult.TERMINATE;
-                            }
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
-        } catch (IOException ex) {
+                    visitor);
+        }
+        catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
         return files;
@@ -177,20 +207,30 @@ public class FileWalkService {
         private final EncodingType encoding;
 
         /**
+         * 行末タイプ.
+         */
+        private final TextTermType termType;
+
+        /**
          * コンストラクタ.
+         *
          * @param path パス
          * @param encoding 文字コード
+         * @param termType 行末タイプ
          */
         @SuppressWarnings("checkstyle:hiddenfield")
-        public FileInfo(final Path path, final EncodingType encoding) {
+        public FileInfo(final Path path, final EncodingType encoding,
+                final TextTermType termType) {
             Objects.requireNonNull(path);
 
             this.path = path;
             this.encoding = encoding;
+            this.termType = termType;
         }
 
         /**
          * パス.
+         *
          * @return パス
          */
         public Path getPath() {
@@ -199,6 +239,7 @@ public class FileWalkService {
 
         /**
          * 文字コード.
+         *
          * @return 文字コード.
          */
         public EncodingType getEncoding() {
@@ -206,7 +247,17 @@ public class FileWalkService {
         }
 
         /**
+         * 行末タイプ.
+         * 
+         * @return  行末タイプ
+         */
+        public TextTermType getTermType() {
+            return termType;
+        }
+
+        /**
          * 診断文字列を返す.
+         *
          * @return 診断文字列
          */
         @Override
@@ -216,8 +267,7 @@ public class FileWalkService {
     }
 
     /**
-     * 指定したパスの走査を行うタスク生成して返します.
-     * (まだ実行はされていません.)
+     * 指定したパスの走査を行うタスク生成して返します. (まだ実行はされていません.)
      *
      * @param dir 対象ディレクトリ
      * @param recursive 再帰的に検査するか？
@@ -262,6 +312,7 @@ public class FileWalkService {
 
             /**
              * ワーカーの実行
+             *
              * @return ファイルリスト
              * @throws Exception 何らかの失敗
              */

@@ -50,7 +50,17 @@
                 <TextField fx:id="txtOutput" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                 <Button fx:id="btnBrowseOutputDir" mnemonicParsing="false" onAction="#handleBrowseOutputDirAction" text="%btn.browseOutput" GridPane.columnIndex="2" GridPane.rowIndex="4" />
                 <Label alignment="CENTER_RIGHT" text="%encoding" GridPane.rowIndex="5" />
-                <ComboBox fx:id="comboEncoding" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+            <HBox alignment="BASELINE_LEFT" prefHeight="100.0" prefWidth="200.0" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
+               <children>
+                      <ComboBox fx:id="comboEncoding" />
+                  <Label text="%termType">
+                     <padding>
+                        <Insets left="15.0" />
+                     </padding>
+                  </Label>
+                  <ComboBox fx:id="comboTermType" />
+               </children>
+            </HBox>
             </children>
             <padding>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -67,8 +77,8 @@
                 <Pane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
                 <HBox alignment="CENTER_RIGHT" spacing="5.0" HBox.hgrow="NEVER">
                     <children>
-                        <Button fx:id="btnConvert" mnemonicParsing="false" onAction="#handleConvertAction" text="%btn.convert" />
                         <Button fx:id="btnCheck" defaultButton="true" onAction="#handleCheckAction" text="%btn.check" />
+                        <Button fx:id="btnConvert" mnemonicParsing="false" onAction="#handleConvertAction" text="%btn.convert" />
                     </children>
                     <HBox.margin>
                         <Insets />
@@ -79,13 +89,14 @@
                 <Insets left="10.0" right="15.0" top="5.0" />
             </VBox.margin>
         </HBox>
-        <TableView fx:id="tblFiles" editable="true" layoutX="14.0" layoutY="230.0" prefHeight="186.0" prefWidth="404.0" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="12.0" AnchorPane.topAnchor="230.0" VBox.vgrow="ALWAYS">
+        <TableView fx:id="tblFiles" editable="true" layoutX="14.0" layoutY="230.0" AnchorPane.bottomAnchor="8.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="12.0" AnchorPane.topAnchor="230.0" VBox.vgrow="ALWAYS">
             <columns>
                 <TableColumn fx:id="colSelect" prefWidth="52.0" text="%col.select" />
                 <TableColumn fx:id="colName" editable="false" prefWidth="240.0" text="%col.name" />
                 <TableColumn fx:id="colEncoding" editable="false" minWidth="7.0" prefWidth="94.0" style="-fx-alignment: CENTER;" text="%col.encoding" />
-            <TableColumn fx:id="colSize" editable="false" style="-fx-alignment: CENTER-RIGHT;" text="%col.size" />
-            <TableColumn fx:id="colLastModified" editable="false" prefWidth="250.0" text="%col.lastModified" />
+                <TableColumn fx:id="colTermType" editable="false" minWidth="7.0" prefWidth="94.0" style="-fx-alignment: CENTER;" text="%col.termType" />
+                <TableColumn fx:id="colSize" editable="false" style="-fx-alignment: CENTER-RIGHT;" text="%col.size" />
+                <TableColumn fx:id="colLastModified" editable="false" prefWidth="250.0" text="%col.lastModified" />
             </columns>
         </TableView>
     </children>

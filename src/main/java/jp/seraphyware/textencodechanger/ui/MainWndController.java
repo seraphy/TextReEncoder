@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +20,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -56,10 +58,16 @@ import javafx.util.StringConverter;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import jp.seraphyware.textencodechanger.services.EncodingType;
+import jp.seraphyware.textencodechanger.services.FileReplaceService;
+import jp.seraphyware.textencodechanger.services.FileReplaceService.ContentConverter;
+import jp.seraphyware.textencodechanger.services.FileReplaceService.ContentReader;
+import jp.seraphyware.textencodechanger.services.FileReplaceService.FileContentConverter;
 import jp.seraphyware.textencodechanger.services.FileWalkService.FileInfo;
 import jp.seraphyware.textencodechanger.services.FileWalkerCallable;
 import jp.seraphyware.textencodechanger.services.OverwriteMode;
 import jp.seraphyware.textencodechanger.services.SearchCondition;
+import jp.seraphyware.textencodechanger.services.TextTermConvService;
+import jp.seraphyware.textencodechanger.services.TextTermType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +115,18 @@ public class MainWndController extends SimpleWindowController implements Initial
     @Autowired
     protected TextEncodeConvService encodeConvService;
 
+    /**
+     * テキストの文字コード変換のサービス.
+     */
+    @Autowired
+    protected FileReplaceService fileReplaceService;
+
+    /**
+     * 行末タイプの変換サービス.
+     */
+    @Autowired(required = true)
+    private TextTermConvService termConvSrv;
+    
     /**
      * バックグラウンドでタスクを実行するためのサービス.
      */
@@ -183,6 +203,12 @@ public class MainWndController extends SimpleWindowController implements Initial
     private ComboBox<EncodingType> comboEncoding;
 
     /**
+     * 行末タイプの選択ドロップダウン.
+     */
+    @FXML
+    private ComboBox<TextTermType> comboTermType;
+
+    /**
      * ファイルのテーブルビュー.
      */
     @FXML
@@ -207,13 +233,19 @@ public class MainWndController extends SimpleWindowController implements Initial
     private TableColumn<MainWndModel.FileItem, EncodingType> colEncoding;
 
     /**
-     * ファイルのサイズ
+     * ファイルの行末タイプカラム.
+     */
+    @FXML
+    private TableColumn<MainWndModel.FileItem, TextTermType> colTermType;
+
+    /**
+     * ファイルのサイズ.
      */
     @FXML
     private TableColumn<MainWndModel.FileItem, Long> colSize;
 
         /**
-     * ファイルの最終更新日
+     * ファイルの最終更新日.
      */
     @FXML
     private TableColumn<MainWndModel.FileItem, FileTime> colLastModified;
@@ -381,6 +413,8 @@ public class MainWndController extends SimpleWindowController implements Initial
                 throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         }));
+        
+        colTermType.setCellValueFactory(p -> p.getValue().termTypeProperty());
 
         // 文字コード選択コンボボックスを設定する.
         comboEncoding.setItems(FXCollections.observableArrayList(
@@ -428,6 +462,28 @@ public class MainWndController extends SimpleWindowController implements Initial
         model.overwriteModeProperty().bind(
                 comboOverwriteMode.getSelectionModel().selectedItemProperty());
 
+        // 行末モードを設定する
+        comboTermType.setItems(
+                FXCollections.observableArrayList(TextTermType.values()));
+        comboTermType.setConverter(new StringConverter<TextTermType>() {
+            @Override
+            public String toString(TextTermType object) {
+                if (object == TextTermType.UNKNOWN) {
+                    return rb.getString("dontcare");
+                }
+                return object.name();
+            }
+
+            @Override
+            public TextTermType fromString(String string) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        });
+        comboTermType.getSelectionModel().select(
+                model.textTermTypeProperty().get());
+        model.textTermTypeProperty().bind(comboTermType.getSelectionModel().
+                selectedItemProperty());
+        
         // デフォルトパターンを設定する.
         txtPattern.textProperty().set(rb.getString("defaultPattern"));
 
@@ -478,6 +534,7 @@ public class MainWndController extends SimpleWindowController implements Initial
             Path filePath = Paths.get(srcDir, file);
             
             TextPreviewController textPrevCtrl = textPrevCtrlProv.get();
+            textPrevCtrl.setOwner(getStage());
             textPrevCtrl.textFilePathProperty().set(filePath);
 
             textPrevCtrl.encodingProperty().set(fileInfo.encodingProperty().get());
@@ -568,6 +625,7 @@ public class MainWndController extends SimpleWindowController implements Initial
         searchCondition.copyTo(lastUseSearchCondition);
 
         EncodingType selEncoding = comboEncoding.getValue();
+        TextTermType selTermType = comboTermType.getValue();
 
         List<Pattern> regexps = fileWalkService.makePatterns(patterns);
         Path srcDir = Paths.get(srcDirStr);
@@ -587,6 +645,7 @@ public class MainWndController extends SimpleWindowController implements Initial
 
         // プログレスダイアログ
         ProgressController progressCtrl = progressCtrlProv.get();
+        progressCtrl.setOwner(getStage());
         progressCtrl.connect(bgTask);
         Stage progStg = progressCtrl.getStage();
         if (!bgTask.isDone()) {
@@ -631,11 +690,21 @@ public class MainWndController extends SimpleWindowController implements Initial
                     
                     // 推定文字コード
                     item.encodingProperty().set(fileInfo.getEncoding());
+                    
+                    // 推定行末コード
+                    item.termTypeProperty().set(fileInfo.getTermType());
 
                     // ファイルの推定文字コードとターゲットの文字コードが
-                    // 一致しなければ、自動的に選択状態とする.
+                    // 一致しなければ、あるいは、改行コードが一致しなければ
+                    // 自動的に選択状態とする.
+                    // (ただし指定もしくは実ファイルのいずれかの改行コードが
+                    // Unknownの場合は改行コードは不問とする.)
                     item.selectProperty().set(
-                            !selEncoding.equals(fileInfo.getEncoding()));
+                            !selEncoding.equals(fileInfo.getEncoding()) ||
+                            (selTermType != TextTermType.UNKNOWN &&
+                             fileInfo.getTermType() != TextTermType.UNKNOWN &&
+                             !selTermType.equals(fileInfo.getTermType()))
+                    );
 
                     return item;
                 }).collect(Collectors.toList());
@@ -675,19 +744,25 @@ public class MainWndController extends SimpleWindowController implements Initial
         OverwriteMode overwriteMode = model.overwriteModeProperty().get();
 
         EncodingType destEncoding = comboEncoding.getValue();
+        TextTermType termType = comboTermType.getValue();
 
         Task<Integer> bgTask = new Task<Integer>() {
             @Override
             protected Integer call() throws Exception {
                 updateTitle("converting...");
 
-                TextEncodeConvService.FileEncodingConverter converter
-                        = encodeConvService.createFileEncodingConverter(
+                Function<CharBuffer, CharBuffer> termConv = (charBuf) ->
+                        termConvSrv.changeTermType(charBuf, termType);
+
+                ContentConverter encConv = (chars) -> encodeConvService.
+                        writeBytes(termConv.apply(chars), destEncoding);
+                FileContentConverter converter
+                        = fileReplaceService.createFileContentConverter(
                                 srcDir,
                                 destDir,
                                 transferType,
                                 overwriteMode,
-                                destEncoding);
+                                encConv);
 
                 int count = 0;
 
@@ -705,7 +780,10 @@ public class MainWndController extends SimpleWindowController implements Initial
                     }
 
                     updateMessage(relativePath);
-                    boolean success = converter.convert(relativePath, srcEncoding);
+                    
+                    ContentReader decConv = (data) ->
+                            encodeConvService.readText(data, srcEncoding);
+                    boolean success = converter.convert(relativePath, decConv);
                     if (success) {
                         // 変換完了を示す
                         Platform.runLater(() -> {
@@ -715,6 +793,11 @@ public class MainWndController extends SimpleWindowController implements Initial
                             
                             // 変更した文字コードに表示を切り替える
                             fileItem.encodingProperty().set(destEncoding);
+
+                            // 変更した改行コードに表示を切り替える.
+                            if (termType != TextTermType.UNKNOWN) {
+                                fileItem.termTypeProperty().set(termType);
+                            }
                             
                             // 文字コードが変更されているので元ファイルは開かないように
                             // ディセーブルにする.

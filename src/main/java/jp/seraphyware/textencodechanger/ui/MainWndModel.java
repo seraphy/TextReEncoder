@@ -15,6 +15,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import jp.seraphyware.textencodechanger.services.EncodingType;
 import jp.seraphyware.textencodechanger.services.OverwriteMode;
+import jp.seraphyware.textencodechanger.services.TextTermType;
 
 /**
  * メインウィンドウのモデル.
@@ -59,6 +60,12 @@ public final class MainWndModel {
                 new SimpleObjectProperty<>();
         
         /**
+         * 行末タイプ.
+         */
+        private final SimpleObjectProperty<TextTermType> termTypeProperty =
+                new SimpleObjectProperty<>();
+        
+        /**
          * 変換済みフラグ.
          */
         private final SimpleBooleanProperty convertedProperty =
@@ -70,6 +77,14 @@ public final class MainWndModel {
          */
         public ObjectProperty<EncodingType> encodingProperty() {
             return encodingProperty;
+        }
+        
+        /**
+         * 行末タイプ.
+         * @return 
+         */
+        public ObjectProperty<TextTermType> termTypeProperty() {
+            return termTypeProperty;
         }
 
         /**
@@ -132,6 +147,12 @@ public final class MainWndModel {
             new SimpleObjectProperty<>(this, "overwriteMode", OverwriteMode.OVERWRITE);
 
     /**
+     * 行末タイプ.
+     */
+    private final SimpleObjectProperty<TextTermType> textTermType =
+            new SimpleObjectProperty<>(this, "textTermType", TextTermType.UNKNOWN);
+    
+    /**
      * ファイルリスト.
      */
     private final ObservableList<FileItem> fileItems
@@ -163,6 +184,14 @@ public final class MainWndModel {
      */
     public ObjectProperty<TransferType> transferTypeProperty() {
         return transferTypeProperty;
+    }
+    
+    /**
+     * 行末タイプ.
+     * @return 行末タイプ
+     */
+    public ObjectProperty<TextTermType> textTermTypeProperty() {
+        return textTermType;
     }
 
     /**

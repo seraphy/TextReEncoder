@@ -8,15 +8,17 @@ package jp.seraphyware.textencodechanger.services;
 public enum TransferType {
 
     /**
-     * 置換.
+     * 置換.<br>
      */
     REPLACE,
+
     /**
-     * コピー.
+     * コピー.<br>
      */
     COPY,
+    
     /**
-     * 移動.
+     * 移動.<br>
      */
     MOVE
 }

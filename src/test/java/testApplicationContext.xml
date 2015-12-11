@@ -4,7 +4,9 @@
     xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
     
-    <bean class="jp.seraphyware.textencodechanger.services.TextEncodeConvService"/>
     <bean class="jp.seraphyware.textencodechanger.services.FileWalkService"/>
+    <bean class="jp.seraphyware.textencodechanger.services.TextEncodeConvService"/>
+    <bean class="jp.seraphyware.textencodechanger.services.TextTermConvService"/>
+    <bean class="jp.seraphyware.textencodechanger.services.FileReplaceService"/>
     
 </beans>
