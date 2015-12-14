@@ -6,6 +6,11 @@
    -fx-text-fill: yellow;
 }
 
+.cell-number {
+    -fx-alignment: CENTER-RIGHT;
+    -fx-padding: 1 10 1 1;
+}
+
 #searchbox {
     -fx-background-image: url('search.png');
     -fx-background-repeat: no-repeat;

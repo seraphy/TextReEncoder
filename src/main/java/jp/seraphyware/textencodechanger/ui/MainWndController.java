@@ -17,6 +17,8 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
@@ -55,6 +57,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
+import javafx.util.converter.FormatStringConverter;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import jp.seraphyware.textencodechanger.services.EncodingType;
@@ -399,7 +402,23 @@ public class MainWndController extends SimpleWindowController implements Initial
         colName.setCellValueFactory(new PropertyValueFactory<>("file"));
         
         colSize.setCellValueFactory(new PropertyValueFactory<>("size"));
+        colSize.setCellFactory(TextFieldTableCell.forTableColumn(
+                new FormatStringConverter<Long>(new DecimalFormat("#,###"))));
+
         colLastModified.setCellValueFactory(new PropertyValueFactory<>("lastModified"));
+        colLastModified.setCellFactory(TextFieldTableCell.forTableColumn(
+                new StringConverter<FileTime>() {
+            final SimpleDateFormat fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            @Override
+            public String toString(FileTime object) {
+                return fmt.format(object.toMillis());
+            }
+
+            @Override
+            public FileTime fromString(String string) {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        }));
 
         colEncoding.setCellValueFactory(new PropertyValueFactory<>("encoding"));
         colEncoding.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<EncodingType>() {
@@ -410,7 +429,7 @@ public class MainWndController extends SimpleWindowController implements Initial
 
             @Override
             public EncodingType fromString(String string) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                throw new UnsupportedOperationException("Not supported yet.");
             }
         }));
         

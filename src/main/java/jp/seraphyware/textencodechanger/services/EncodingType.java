@@ -153,6 +153,10 @@ public enum EncodingType {
         if (len == 0) {
             return true;
         }
+        if (len > buf.limit()) {
+            // BOMよりも小さいファイル
+            return false;
+        }
         byte[] tmp = new byte[len];
         buf.get(tmp);
         return isSameBOM(tmp, 0, len);
