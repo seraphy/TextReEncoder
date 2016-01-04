@@ -800,8 +800,8 @@ public class MainWndController extends SimpleWindowController implements Initial
 
                     updateMessage(relativePath);
                     
-                    ContentReader decConv = (data) ->
-                            encodeConvService.readText(data, srcEncoding);
+                    ContentReader decConv = (byteBuf) ->
+                            encodeConvService.readText(byteBuf, srcEncoding);
                     boolean success = converter.convert(relativePath, decConv);
                     if (success) {
                         // 変換完了を示す

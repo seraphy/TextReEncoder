@@ -35,7 +35,7 @@ public class FileReplaceService {
     @FunctionalInterface
     public interface ContentReader {
         
-        CharBuffer read(byte[] data) throws CharacterCodingException;
+        CharBuffer read(ByteBuffer data) throws CharacterCodingException;
     }
     
     /**
@@ -102,7 +102,8 @@ public class FileReplaceService {
 
             // 入力元ファイルの読み込み
             byte[] data = Files.readAllBytes(src);
-            CharBuffer inp = reader.read(data);
+            ByteBuffer byteBuf = ByteBuffer.wrap(data);
+            CharBuffer inp = reader.read(byteBuf);
             ByteBuffer outData = converter.convert(inp);
 
             Path dest;

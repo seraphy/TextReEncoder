@@ -1,6 +1,7 @@
 package jp.seraphyware.textencodechanger.ui;
 
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.file.Files;
@@ -244,9 +245,10 @@ public class TextPreviewController extends SimpleWindowController
             } else {
                 data = new byte[0];
             }
+            ByteBuffer byteBuf = ByteBuffer.wrap(data);
             
             EncodingType encoding = getEncodingType();
-            CharBuffer textBuf = encodeConvService.readText(data, encoding);
+            CharBuffer textBuf = encodeConvService.readText(byteBuf, encoding);
             StringBuilder buf = new StringBuilder();
             buf.append(textBuf);
             

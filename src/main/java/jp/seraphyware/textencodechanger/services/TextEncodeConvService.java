@@ -98,29 +98,32 @@ public class TextEncodeConvService {
                 break;
 
             } else {
-                log.info("coding error: " + enc);
+                if (log.isDebugEnabled()) {
+                    log.debug("coding error: " + enc);
+                }
             }
         }
-        log.debug("-" + encodingOk);
+        if (log.isDebugEnabled()) {
+            log.debug("-" + encodingOk);
+        }
         return encodingOk;
     }
 
     /**
-     * テキストの読み込み
-     * @param data バイトデータ
+     * テキストの読み込み.
+     * @param byteBuf バイトデータ(リワインドされる)
      * @param srcEncoding 文字コード
      * @return 変換されたテキスト
      * @throws CharacterCodingException 読み込みに失敗
      */
     public CharBuffer readText(
-            final byte[] data,
+            final ByteBuffer byteBuf,
             final EncodingType srcEncoding
     ) throws CharacterCodingException {
-        Objects.requireNonNull(data);
+        Objects.requireNonNull(byteBuf);
         Objects.requireNonNull(srcEncoding);
 
-        // 文字データの取得
-        ByteBuffer byteBuf = ByteBuffer.wrap(data);
+        byteBuf.rewind();
         return srcEncoding.decode(byteBuf);
     }
     
@@ -144,21 +147,22 @@ public class TextEncodeConvService {
     /**
      * 指定した文字コードでテキストファイルを読み込み、 指定した文字コードのバイト列に変換して返す.
      *
-     * @param data バイトデータ
+     * @param byteBuf バイトデータ
      * @param srcEncoding 読み込むエンコーディング
      * @param destEncoding バイト列に変換するエンコーディング
      * @return 変換後のバイト列
      * @throws CharacterCodingException 文字コードの変換に失敗
      */
     public ByteBuffer readConvertedText(
-            final byte[] data,
+            final ByteBuffer byteBuf,
             final EncodingType srcEncoding,
             final EncodingType destEncoding
     ) throws CharacterCodingException {
-        Objects.requireNonNull(data);
+        Objects.requireNonNull(byteBuf);
         Objects.requireNonNull(srcEncoding);
         Objects.requireNonNull(destEncoding);
 
-        return writeBytes(readText(data, srcEncoding), destEncoding);
+        byteBuf.rewind();
+        return writeBytes(readText(byteBuf, srcEncoding), destEncoding);
     }
 }

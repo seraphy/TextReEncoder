@@ -137,9 +137,7 @@ public class FileWalkService {
                     if (!attrs.isDirectory()) {
                         if (fileNameMatcher.match(name)) {
                             // ファイルの読み取り
-                            log.debug("load: " + filePath);
-                            byte[] data = Files.readAllBytes(filePath);
-                            ByteBuffer byteBuf = ByteBuffer.wrap(data);
+                            ByteBuffer byteBuf = load(filePath);
 
                             // 文字コードの推定
                             EncodingType enc = encConvSrv
@@ -150,11 +148,11 @@ public class FileWalkService {
                             if (enc != null) {
                                 try {
                                     CharBuffer charBuf = encConvSrv.readText(
-                                            data, enc);
+                                            byteBuf, enc);
                                     term = termConvSrv.presumeTermType(charBuf);
                                 } catch (IOException ex) {
                                     log.warn("can't decode text." + filePath +
-                                            "|enc=" + enc);
+                                            "|enc=" + enc, ex);
                                 }
                             }
 
@@ -189,6 +187,20 @@ public class FileWalkService {
             throw new UncheckedIOException(ex);
         }
         return files;
+    }
+
+    /**
+     * ファイルを一括して読み取りByteBufferに格納して返す.
+     * @param filePath
+     * @return バイトバッファ
+     * @throws IOException 
+     */
+    private static ByteBuffer load(Path filePath) throws IOException {
+        if (log.isDebugEnabled()) {
+            log.debug("load: " + filePath);
+        }
+        byte[] data = Files.readAllBytes(filePath);
+        return ByteBuffer.wrap(data);
     }
 
     /**
