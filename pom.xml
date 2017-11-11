@@ -4,7 +4,7 @@
 
     <groupId>jp.seraphyware</groupId>
     <artifactId>TextReEncoder</artifactId>
-    <version>1.3-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>TextReEncoder</name>
@@ -332,30 +332,7 @@
             <artifactId>jsr250-api</artifactId>
             <version>1.0</version>
         </dependency>        
-        
-        <!-- Eclipse Moxy
-         https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.moxy
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-        
-          JAXB API (java9よりJAXBが非推奨になったため) 
-          https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api
-        <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse.persistence</groupId>
-            <artifactId>org.eclipse.persistence.moxy</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-        -->
-
+   
         <!-- SPRING FRAMEWORK 4.2 (DI) -->
         <dependency>
             <groupId>org.springframework</groupId>
