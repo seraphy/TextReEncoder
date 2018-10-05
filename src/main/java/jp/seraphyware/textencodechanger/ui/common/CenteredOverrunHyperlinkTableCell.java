@@ -72,7 +72,7 @@ public class CenteredOverrunHyperlinkTableCell<T, S> extends TableCell<T, S> {
         }
         
 	@SuppressWarnings("unchecked")
-        TableRow<S> row = getTableRow();
+        TableRow<T> row = getTableRow();
         if (empty || row == null) {
             setText(null);
             setGraphic(null);
