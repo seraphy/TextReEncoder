@@ -4,5 +4,6 @@ env:
       - MAVEN_OPTS="-Xmx128m"
 jdk:
   - oraclejdk8
+  - oraclejdk11
 script:
   - mvn clean test
