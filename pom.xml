@@ -4,7 +4,7 @@
 
     <groupId>jp.seraphyware</groupId>
     <artifactId>TextReEncoder</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.5-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>TextReEncoder</name>
@@ -20,6 +20,13 @@
         NetBeans8のプロジェクトです。
         GUIのデザインにはScene Builder2を使用しています。
         実行およびビルドにはJava8が必要です。
+        
+        ---
+        
+        2018/10 Java11に対応。
+        Maven3.5.4でビルド
+        JavaFXをモジュールとして参照するように修正。
+        そのかわりFatJarにはできなくなった。
     ]]></description>
 
     <url>https://github.com/seraphy/TextReEncoder.git</url>
@@ -67,37 +74,85 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <spring.version>5.1.0.RELEASE</spring.version>
         <mainClass>jp.seraphyware.textencodechanger.MainApp</mainClass>
     </properties>
 
     <build>
         <plugins>
-            <!-- java8によるビルド -->
+            <!-- コンパイラ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <compilerArgument>-Xlint:all</compilerArgument>
-                </configuration>
+                <version>3.8.0</version>
             </plugin>
 
+            <!-- ソースコードもjarにする -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
+
+            <!-- 依存するパッケージをlibフォルダに出力する -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <overWriteReleases>false</overWriteReleases>
+                            <overWriteSnapshots>false</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
+
+            <!-- 依存パッケージへのクラスパスとメインクラスのあるMANIFESTをもつJARの作成 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib</classpathPrefix>
+                            <mainClass>${mainClass}</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <SplashScreen-Image>splash_picture.png</SplashScreen-Image>
+                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                            <Built-By>${project.developers[0].id}</Built-By>
+                            <Specification-Title>${project.name}</Specification-Title>
+                            <Specification-Version>${project.version}</Specification-Version>
+                            <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Vendor-Id>${project.organization.name}</Implementation-Vendor-Id>
+                            <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
 
             <!-- 単体テスト有効 -->
@@ -106,212 +161,27 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.16</version>
             </plugin>
-
-            <!--
-                パッケージ時, 単一の実行可能jarを作成するために依存ライブラリを展開する.
-                packageフェーズでmakejarのexecutionよりも先行させる必要がある.(pom上で前に書けば良い)
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>2.10</version>
-                <executions>
-                    <execution>
-                        <id>unpack-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <excludeScope>system</excludeScope>
-                            <excludeGroupIds>junit,org.mockito,org.hamcrest</excludeGroupIds>
-                            <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- パッケージ時, 単一の実行可能jarを作成する -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.3.2</version>
-                <executions>
-                    <execution>
-                        <id>makejar</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>${java.home}/../bin/javapackager</executable>
-                            <arguments>
-                                <argument>-createjar</argument>
-                                <argument>-nocss2bin</argument>
-                                <argument>-appclass</argument>
-                                <argument>${mainClass}</argument>
-                                <argument>-srcdir</argument>
-                                <argument>${project.build.directory}/classes</argument>
-                                <argument>-outdir</argument>
-                                <argument>${project.build.directory}</argument>
-                                <argument>-outfile</argument>
-                                <argument>${project.build.finalName}.jar</argument>
-                                <argument>-manifestAttrs</argument>
-                                <argument>Splashscreen-Image=splash_picture.png</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>  
-            </plugin>
-
-            <!-- CheckStyleプラグイン -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.14</version>
-                <dependencies>
-                    <!-- Java8のラムダ式を正しい文法と認識できるバージョンを指定する -->
-                    <dependency>
-                        <groupId>com.puppycrawl.tools</groupId>
-                        <artifactId>checkstyle</artifactId>
-                        <version>6.3</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-            <!-- findbugsプラグイン 3.0以降はjava8に対応済み -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
-
-            <!-- サイト設定 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <dependencies>
-                    <!-- markdownによるsiteのhtmlを構築可能とする -->
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-markdown</artifactId>
-                        <version>1.6</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <locales>ja</locales>
-                    <inputEncoding>UTF-8</inputEncoding>
-                    <outputEncoding>UTF-8</outputEncoding>
-                    <reportPlugins>
-                        <!-- プロジェクト情報の出力 -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-project-info-reports-plugin</artifactId>
-                            <version>2.8</version>
-                            <reportSets>
-                                <reportSet>
-                                    <reports>
-                                        <!-- プロジェクト情報 -->
-                                        <report>index</report>
-                                        <report>summary</report>
-                                        <report>license</report>
-                                        <report>scm</report>
-                                        <report>cim</report>
-                                        <report>issue-tracking</report>
-                                        <report>project-team</report>
-                                        <!-- リーリングリスト
-                                        <report>mailing-list</report>
-                                        -->
-                                        <!--
-                                        java8のクラスの依存関係をチェックすると警告が大量に発生する.
-                                        しかし機能はするようだ. (2015/2/25現在)
-                                        -->
-                                        <report>dependencies</report>
-                                        <report>dependency-convergence</report>
-                                        <report>dependency-management</report>
-                                        <!-- ビルドまわりの情報 -->
-                                        <report>plugin-management</report>
-                                        <report>plugins</report>
-                                    </reports>
-                                </reportSet>
-                            </reportSets>
-                        </plugin>
-                        <!-- JAVADOC -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <version>2.10.1</version>
-                            <reportSets>
-                                <reportSet>
-                                    <!--
-                                      本体側JAVADOCのみ生成 
-                                      UnitTest側は作成しない.
-                                      (生成できるがビルド時に警告がたくさんでる)
-                                    -->
-                                    <id>html</id>
-                                    <configuration>
-                                        <doctitle>My API for ${project.name} ${project.version}</doctitle>
-                                        <windowtitle>My API for ${project.name} ${project.version}</windowtitle>
-                                    </configuration>
-                                    <reports>
-                                        <report>javadoc</report>
-                                    </reports>
-                                </reportSet>
-                            </reportSets>
-                        </plugin>
-                        <!-- テストレポート -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-surefire-report-plugin</artifactId>
-                            <version>2.18.1</version>
-                        </plugin>
-                        <!--
-                            CheckStyleの設定.
-                            NewlineAtEndOfFileがうざいので, *.java, *.propertiesに対して,
-                            suppressions.xmlで除外指定している.
-                        -->
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-checkstyle-plugin</artifactId>
-                            <version>2.14</version>
-                            <configuration>
-                                <suppressionsLocation>suppressions.xml</suppressionsLocation>
-                                <configLocation>config/sun_checks.xml</configLocation>
-                            </configuration>
-                        </plugin>
-                        <!-- findbugs -->
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>findbugs-maven-plugin</artifactId>
-                            <version>3.0.0</version>
-                            <configuration>
-                                <effort>Max</effort>
-                                <xmlOutput>true</xmlOutput>
-                            </configuration>
-                        </plugin>
-                        <!-- PMD/CPD -->
-                        <plugin>
-                            <artifactId>maven-pmd-plugin</artifactId>
-                            <version>3.4</version>
-                            <configuration>
-                                <targetJdk>${maven.compiler.target}</targetJdk>
-                            </configuration>
-                            <reportSets>
-                                <reportSet>
-                                    <reports>
-                                        <report>pmd</report>
-                                        <report>cpd</report>
-                                    </reports>
-                                </reportSet>
-                            </reportSets>
-                        </plugin>
-                    </reportPlugins>        
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+        <!--
+          OpenJFX
+          https://wiki.openjdk.java.net/display/OpenJFX/Main
+          
+          Java11からJavaFXはJREに含まれないため、ライブラリとして組み込み必要がある
+        -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>11</version>
+        </dependency>
+
         <!--
           ControlsFX
           http://fxexperience.com/controlsfx/
@@ -319,12 +189,17 @@
         <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
-            <version>8.20.8</version>
+            <!-- <version>8.20.8</version>
+                ※ Java9以降、アクセス不可能になった内部クラスに依存するため
+                ControlsFXのSpreadsheetViewなどは削除されている。
+                本アプリは使っていないので、9.0.0にしてもJava8,Java11どちらでも問題ない
+                https://bitbucket.org/controlsfx/controlsfx/issues/780/controlsfx-should-support-java-9
+                https://groups.google.com/d/msg/controlsfx-dev/5pMt_w44VIU/IdU6jC1mDwAJ
+            -->
+            <version>9.0.0</version>
         </dependency>
         
         <!-- JSR-250 APIの明示的な組み込み
-          ※ java9ではJavaEE APIまわりを利用するためには add-modules java.se.ee を
-          指定しないかぎり利用できなくなっている。明示的に組み込めば利用できる。
           https://mvnrepository.com/artifact/javax.annotation/jsr250-api
         -->
         <dependency>
@@ -333,11 +208,13 @@
             <version>1.0</version>
         </dependency>        
    
-        <!-- SPRING FRAMEWORK 4.2 (DI) -->
+        <!-- SPRING FRAMEWORK 5.1 (DI)
+         v5以降はJava8以降が必須。
+        -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <version>4.2.3.RELEASE</version>
+            <version>${spring.version}</version>
             <exclusions>
                 <exclusion>
                     <!-- Commons-Loggingのかわりに, SLF4Jを使うため -->
@@ -359,41 +236,26 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.10</version>
-        </dependency>
-
-        <!-- Commons-LoggingをSLF4Jで置き換える -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.7.10</version>
-            <scope>runtime</scope>
+            <version>1.7.25</version>
         </dependency>
 
         <!-- SLF4Jのログ実装をLog4j2にする -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.1</version>
-            <exclusions>
-                <exclusion>
-                    <!-- 参照しているslf4j-api ver1.7.10を外す -->
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>2.11.1</version>
         </dependency>
 
         <!-- LOG4J2 -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.1</version>
+            <version>2.11.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.1</version>
+            <version>2.11.1</version>
         </dependency>
 
         <!-- TestNG -->
@@ -408,9 +270,63 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>4.1.4.RELEASE</version>
+            <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
+    <reporting>
+        <plugins>
+            <!-- findbugsプラグイン 3.0以降はjava8に対応済み
+             Java10以降怪しい？ので、しばらく除外
+           <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>findbugs-maven-plugin</artifactId>
+               <version>3.0.5</version>
+               <configuration>
+                   <xmlOutput>true</xmlOutput>
+               </configuration>
+           </plugin>
+            -->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.0.0</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>checkstyle</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+
+            <!-- javadoc生成 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.8</version>
+            </plugin>
+
+            <!-- site生成 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                </configuration>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>dependencies</report>
+                            <report>scm</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>

@@ -1,9 +1,17 @@
-テキストファイル文字コード変換ツール(TextReEncoder)
+テキストファイル文字コード変換ツール(TextReEncoder) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 =================================================
 指定したディレクトリ以下にあるテキストファイルの文字コードを一括変換するGUIツールです。
 
 JavaFX8を使用しているため、Java8以降のランタイムが必要です。
 
+リリースの種類
+------------
+
+- ver1.4は、Java8がインストールされている環境では単一のjarとして実行できます。Java11には対応していません。(JavaFXを使用しているため)
+- ver1.5は、Java\8, Java11のいずれでも動作します。ただし、単一jarではなく、libフォルダ上にライブラリが分離されています。(主にJavaFXのモジュールのため)
+  - java11で実行するには ```run.bat``` からの実行が必要です。(jarファイルのダブルクリックでは開きません。また、java11のパスの設定が必要です。)
+
+ver1.4/1.5に機能的な差異はありません。
 
 使い方
 ------
@@ -30,9 +38,9 @@ UTFの場合はBOMあり、BOMなしの区別があります。
 ----------------
 [![Build Status](https://travis-ci.org/seraphy/TextReEncoder.svg)](https://travis-ci.org/seraphy/TextReEncoder)
 
-ビルドにはMavenが必要です。
+ビルドにはMaven(3.5.4)が必要です。
 
-プロジェクトはNetBeans8で作成されました。
+プロジェクトはNetBeans8で作成されました。(現在はNetBeans9でメンテナンスしています)
 
 FXMLファイルに編集には、SceneBuilder2を使用しています。
 
