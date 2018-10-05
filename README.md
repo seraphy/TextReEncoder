@@ -9,7 +9,7 @@ JavaFX8を使用しているため、Java8以降のランタイムが必要で�
 
 - ver1.4は、Java8がインストールされている環境では単一のjarとして実行できます。Java11には対応していません。(JavaFXを使用しているため)
 - ver1.5は、Java\8, Java11のいずれでも動作します。ただし、単一jarではなく、libフォルダ上にライブラリが分離されています。(主にJavaFXのモジュールのため)
-  - java11で実行するには ```run.bat``` からの実行が必要です。(jarファイルのダブルクリックでは開きません。また、java11のパスの設定が必要です。)
+  - java11で実行するには ```run11.bat``` からの実行が必要です。(jarファイルのダブルクリックでは開きません。また、java11のパスの設定が必要です。)
 
 ver1.4/1.5に機能的な差異はありません。
 
@@ -47,7 +47,7 @@ FXMLファイルに編集には、SceneBuilder2を使用しています。
  
 ライセンス
 ----------
-Copyright &copy; 2015 seraphyware
+Copyright &copy; 2015-2018 seraphyware
 
 Licensed under the [Apache License, Version 2.0][Apache]
 
