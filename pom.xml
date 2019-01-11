@@ -399,6 +399,7 @@
             <id>java11</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
+                <jdk>[11</jdk>
             </activation>
             <dependencies>
                 <!--
