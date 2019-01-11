@@ -18,6 +18,7 @@
         <fileSet>
             <directory>src/assembly</directory>
             <outputDirectory>.</outputDirectory>
+            <filtered>true</filtered>
             <includes>
                 <include>run.bat</include>
                 <include>run11.bat</include>
@@ -27,8 +28,10 @@
         <fileSet>
             <directory>target</directory>
             <outputDirectory>.</outputDirectory>
+            <filtered>false</filtered>
             <includes>
                 <include>*.jar</include>
+                <include>*.exe</include>
             </includes>
             <excludes>
                 <exclude>*-sources.jar</exclude>
@@ -38,6 +41,7 @@
         <fileSet>
             <directory>target/lib</directory>
             <outputDirectory>lib</outputDirectory>
+            <filtered>false</filtered>
             <includes>
                 <include>**/*</include>
             </includes>

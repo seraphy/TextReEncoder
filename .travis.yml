@@ -4,6 +4,10 @@ env:
       - MAVEN_OPTS="-Xmx128m"
 jdk:
   - oraclejdk8
-  - openjdk11
 script:
-  - mvn clean test
+  - jdk_switcher use oraclejdk8
+  - ./mvnw clean package -Pjava8
+  - export JAVA_HOME=$HOME/openjdk11
+  - $TRAVIS_BUILD_DIR/install-jdk.sh --install openjdk11 --target $JAVA_HOME
+  - ./mvnw clean package -Pjava11
+  

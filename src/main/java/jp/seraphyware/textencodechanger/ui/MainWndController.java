@@ -20,7 +20,9 @@ import java.nio.file.attribute.FileTime;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -42,15 +44,23 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.DialogPane;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -151,6 +161,12 @@ public class MainWndController extends SimpleWindowController implements Initial
      */
     private final SearchCondition lastUseSearchCondition = new SearchCondition();
 
+    /**
+     * ルート
+     */
+    @FXML
+    private VBox root;
+    
     /**
      * 入力元テキストボックス.
      */
@@ -540,8 +556,39 @@ public class MainWndController extends SimpleWindowController implements Initial
 
         // フォーカスを入力元フォルダフィールドに設定する.
         Platform.runLater(() -> txtInput.requestFocus());
+        
+        // about表示
+        ContextMenu menu = new ContextMenu();
+        MenuItem menuItem = new MenuItem("Show SystemProperties");
+        menuItem.setOnAction(evt -> showSystemInformation());
+        menu.getItems().addAll(menuItem);
+
+        root.addEventHandler(MouseEvent.MOUSE_PRESSED, evt -> {
+            if (evt.getButton() == MouseButton.SECONDARY) {
+                menu.show(getStage(), evt.getScreenX(), evt.getScreenY());
+            }
+        });
     }
 
+    /**
+     * システムプロパティの表示
+     */
+    protected void showSystemInformation() {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.initOwner(getStage());
+        alert.setTitle("System Infomation");
+        alert.setHeaderText("java version: " + System.getProperty("java.version"));
+        TextArea textArea = new TextArea();
+        textArea.setEditable(false);
+        Properties props = System.getProperties();
+        for (String propName : new TreeSet<String>(props.stringPropertyNames())) {
+            String propValue = props.getProperty(propName);
+            textArea.appendText(propName + "=" + propValue + System.lineSeparator());
+        }
+        alert.getDialogPane().setExpandableContent(textArea);
+        alert.showAndWait();
+    }
+    
     /**
      * ファイルのプレビューダイアログを開く
      * @param fileInfo 
