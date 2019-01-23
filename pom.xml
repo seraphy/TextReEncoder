@@ -356,6 +356,7 @@
                                     <outfile>target/${project.artifactId}.exe</outfile>
                                     <jar>target/${project.artifactId}.jar</jar>
                                     <errTitle>Failed to execute the ${project.artifactId}</errTitle>
+                                    <icon>icon.ico</icon>
                                     <!-- JAVA_HOMEがみつからない場合は手動選択できるようにするカスタムヘッド -->
                                     <objs>
                                         <obj>src/Launch4JStub/w32api/crt2.o</obj>
@@ -488,6 +489,7 @@
                                     <!-- 外部jarのランチャとしてexeを生成する。jarはラップしない。 -->
                                     <dontWrapJar>true</dontWrapJar>
                                     <errTitle>Failed to execute the ${project.artifactId}</errTitle>
+                                    <icon>icon.ico</icon>
                                     <!-- JAVA_HOMEがみつからない場合は手動選択できるようにするカスタムヘッド -->
                                     <objs>
                                         <obj>src/Launch4JStub/w32api/crt2.o</obj>
