@@ -8,6 +8,9 @@ import javax.swing.SwingUtilities;
 import jp.seraphyware.textencodechanger.ui.MainWndController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.
         AnnotationConfigApplicationContext;
 
@@ -27,6 +30,12 @@ public class MainApp extends Application {
      * Springのコンテキスト.
      */
     private AnnotationConfigApplicationContext context;
+    
+    /**
+     * メインウィンドウ
+     */
+    @Autowired
+    private MainWndController mainWindow;
 
     /**
      * JavaFXアプリケーションの初期化時に呼び出される.
@@ -44,6 +53,14 @@ public class MainApp extends Application {
         context.scan("jp.seraphyware.services"); // スキャンによる方法
         context.scan("jp.seraphyware.ui"); // スキャンによる方法
         context.refresh();
+        
+        // このインスタンスを管理ビーンにする
+        // 参考: https://ksby.hatenablog.com/entry/2016/08/14/185055
+        AutowireCapableBeanFactory beanFactory = context.getAutowireCapableBeanFactory();
+        beanFactory.autowireBean(this);
+        beanFactory.initializeBean(this, getClass().getSimpleName());
+        ((ConfigurableListableBeanFactory) context.getBeanFactory())
+                .registerSingleton(getClass().getSimpleName(), this);
     }
 
     /**
@@ -57,7 +74,6 @@ public class MainApp extends Application {
         log.info("★MainApp::start");
 
         // メインウィンドウの表示
-        MainWndController mainWindow = context.getBean(MainWndController.class);
         Stage stg = mainWindow.getStage();
         stg.show();
         
