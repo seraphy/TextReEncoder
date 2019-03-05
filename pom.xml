@@ -78,7 +78,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.version>5.1.0.RELEASE</spring.version>
-        <mainClass>jp.seraphyware.textencodechanger.MainApp</mainClass>
+        <mainClass>jp.seraphyware.textencodechanger.Main</mainClass>
         <exeFileVersion>1.5.0.1</exeFileVersion>
     </properties>
 
