@@ -397,6 +397,8 @@
             </build>
         </profile>
         <profile>
+            <!-- Java11でのビルドを行う。 Java11にはJavaFXがないため明示的にライブラリとして参照する。
+            生成物はJavaFXを含むライブラリをクラスパスを通したlibフォルダに格納しており、java8以降で実行できる。 -->
             <id>java11</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -469,6 +471,32 @@
                             </execution>
                         </executions>
                     </plugin>
+                    <!-- リソース中のpngをコピーする -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-resources</id>
+                                <phase>validate</phase>
+                                <goals>
+                                  <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${basedir}/target</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>src/main/resources</directory>
+                                            <includes>
+                                                <include>splash_picture.png</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
 
                     <plugin>
                         <!-- Launch4jによるjarファイルのexe化を行う. http://launch4j.sourceforge.net/docs.html -->
@@ -485,7 +513,11 @@
                                 <configuration>
                                     <headerType>gui</headerType>
                                     <outfile>target/${project.artifactId}.exe</outfile>
-                                    <jar>${project.artifactId}.jar</jar>
+                                    <!-- Launch4jプラグインはjarを空名にするか、もしくは指定しないと暗黙で成果物のjar名を設定してしまうため、
+                                    あえて実在しないダミーのjar名を指定しておく。これがLaunch4jで指定されるクラスパスの最初に付与される。
+                                    (launch4j自身は dontWrapJar=True の場合はクラスパスさえ指定していればjarがなくても問題ないのだが) -->
+                                    <jar>dummy.jar</jar>
+                                    <!-- <jar>${project.artifactId}.jar</jar> -->
                                     <!-- 外部jarのランチャとしてexeを生成する。jarはラップしない。 -->
                                     <dontWrapJar>true</dontWrapJar>
                                     <errTitle>Failed to execute the ${project.artifactId}</errTitle>
@@ -505,15 +537,21 @@
                                         <lib>src/Launch4jStub/w32api/libadvapi32.a</lib>
                                         <lib>src/Launch4jStub/w32api/libshell32.a</lib>
                                     </libs>
+                                    <classPath>
+                                        <mainClass>${mainClass}</mainClass>
+                                        <!-- Launch4j側でクラスパスを通す。ライブラリはlib/*にあると想定 -->
+                                        <addDependencies>true</addDependencies>
+                                        <jarLocation>lib</jarLocation>
+                                        <!-- 依存ライブラリの"後ろ"に本体jarを付与する。
+                                        javafx11のロード順序で本体が最後に読まれないと、javafx関連のjar, dll類が正しく読み込まれないため -->
+                                        <postCp>${project.artifactId}.jar</postCp>
+                                    </classPath>
                                     <jre>
                                         <path>jre</path>
-                                        <!-- モジュールパスを使ってJavaFXをライブラリとして読み込むため、Java11以降を必須とする -->
-                                        <minVersion>11</minVersion>
+                                        <!-- システムにインストールされているJRE探索を行うにはminVersionの指定が必須 -->
+                                        <minVersion>8</minVersion>
                                         <opts>
-                                            <opt>-p</opt>
-                                            <opt>lib</opt>
-                                            <opt>--add-modules</opt>
-                                            <opt>javafx.controls,javafx.fxml,javax.inject</opt>
+                                            <opt>-splash:splash_picture.png</opt>
                                         </opts>
                                     </jre>
                                     <versionInfo>

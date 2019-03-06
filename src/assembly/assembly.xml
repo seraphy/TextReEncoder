@@ -14,16 +14,6 @@
                 <include>LICENSE</include>
             </includes>
         </fileSet>
-        <!-- 実行バッチのコピー (Java11用) -->
-        <fileSet>
-            <directory>src/assembly</directory>
-            <outputDirectory>.</outputDirectory>
-            <filtered>true</filtered>
-            <includes>
-                <include>run.bat</include>
-                <include>run11.bat</include>
-            </includes>
-        </fileSet>
         <!-- 生成jarのコピー -->
         <fileSet>
             <directory>target</directory>
@@ -44,6 +34,15 @@
             <filtered>false</filtered>
             <includes>
                 <include>**/*</include>
+            </includes>
+        </fileSet>
+        <!-- スプラッシュのコピー -->
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>.</outputDirectory>
+            <filtered>false</filtered>
+            <includes>
+                <include>splash_picture.png</include>
             </includes>
         </fileSet>
     </fileSets>
