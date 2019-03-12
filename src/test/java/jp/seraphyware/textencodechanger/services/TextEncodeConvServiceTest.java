@@ -3,55 +3,26 @@ package jp.seraphyware.textencodechanger.services;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
+import jp.seraphyware.textencodechanger.UnitTestConfiguration;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * TextEncodeConvServiceのTestNGによるテスト
  * 
  * @author seraphy
  */
-@ContextConfiguration("file:src/test/java/testApplicationContext.xml")
-public class TextEncodeConvServiceTest extends AbstractTestNGSpringContextTests {
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {UnitTestConfiguration.class})
+public class TextEncodeConvServiceTest {
     
     @Autowired
     private TextEncodeConvService serivce;
     
-    /**
-     * クラス準備
-     * @throws Exception 
-     */
-    @org.testng.annotations.BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    /**
-     * クラスの後始末
-     * @throws Exception 
-     */
-    @org.testng.annotations.AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
-    /**
-     * テスト準備
-     * @throws Exception 
-     */
-    @org.testng.annotations.BeforeMethod
-    public void setUpMethod() throws Exception {
-    }
-
-    /**
-     * テストの後始末
-     * @throws Exception 
-     */
-    @org.testng.annotations.AfterMethod
-    public void tearDownMethod() throws Exception {
-    }
-
     /**
      * サポートする文字コード一覧の取得テスト
      * @throws Exception 失敗

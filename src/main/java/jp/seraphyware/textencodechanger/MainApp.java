@@ -8,14 +8,15 @@ import javax.swing.SwingUtilities;
 import jp.seraphyware.textencodechanger.ui.MainWndController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.
-        AnnotationConfigApplicationContext;
-
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 /**
  * アプリケーションのエントリ.
  *
  * @author seraphy
  */
+@SpringBootApplication
 public class MainApp extends Application {
 
     /**
@@ -26,7 +27,7 @@ public class MainApp extends Application {
     /**
      * Springのコンテキスト.
      */
-    private AnnotationConfigApplicationContext context;
+    private ConfigurableApplicationContext context;
 
     /**
      * JavaFXアプリケーションの初期化時に呼び出される.
@@ -38,12 +39,8 @@ public class MainApp extends Application {
 
         // Springのコンテキストを作成する.
         // JavaFXのlaunchにより、JavaFXスレッド上でコンテキストを構築する.
-        context = new AnnotationConfigApplicationContext();
-        //context.register(MainAppConfiguration.class); // 明示的なBeanの定義による方法
-        context.scan("jp.seraphyware"); // スキャンによる方法
-        context.scan("jp.seraphyware.services"); // スキャンによる方法
-        context.scan("jp.seraphyware.ui"); // スキャンによる方法
-        context.refresh();
+        String[] args = getParameters().getRaw().toArray(new String[0]);
+        context = SpringApplication.run(MainApp.class, args);
     }
 
     /**
@@ -87,17 +84,5 @@ public class MainApp extends Application {
         log.info("★MainApp::stop");
         // コンテキストを終了する.
         context.close();
-    }
-    
-    /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
-     *
-     * @param args the command line arguments
-     */
-    public static void main(final String[] args) {
-        launch(args);
     }
 }
