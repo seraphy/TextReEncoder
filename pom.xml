@@ -9,27 +9,144 @@
 
     <name>TextReEncoder</name>
 
+    <properties>
+        <java.version>1.8</java.version>
+        <start-class>jp.seraphyware.textencodechanger.Main</start-class>
+        <exeFileVersion>1.6.0.0</exeFileVersion>
+    </properties>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.1.3.RELEASE</version>
     </parent>
 
-    <properties>
-        <java.version>1.8</java.version>
-        <start-class>jp.seraphyware.textencodechanger.Main</start-class>
-    </properties>
+    <description><![CDATA[
+        これはJavaFX8によるGUIの「テキストファイル文字コード変換ツール」です。
+        (JavaFX8 + Spring4 + Log4j2 の組み合わせの技術習得を兼ねて作成した。)
 
+        任意のフォルダを走査し、指定したパターンに合致する名前のテキストファイルを
+        読み込み、その文字コードを推定し、テーブルに結果を一覧表示します。
+        その後、テーブルで必要なファイルを選択し、指定した文字コードで変換して保存します。
+
+        NetBeans8のプロジェクトです。
+        GUIのデザインにはScene Builder2を使用しています。
+        実行およびビルドにはJava8が必要です。
+        
+        ---
+        
+        2019/1/11 Java8, Java11のビルドをProfileで切り替え
+        Maven Wrapper導入
+        Launch4jのカスタムヘッド使用
+
+        2018/10 Java11に対応。
+        Maven3.5.4でビルド
+
+    ]]></description>
+
+    <url>https://github.com/seraphy/TextReEncoder.git</url>
+
+    <organization>
+        <name>seraphyware.jp</name>
+        <url>https://github.com/seraphy</url>
+    </organization>
+
+    <scm>
+        <connection>scm:git:https://github.com/seraphy/TextReEncoder.git</connection>
+        <developerConnection>scm:git:https://github.com/seraphy/TextReEncoder.git</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/seraphy/TextReEncoder</url>
+    </scm>
+
+    <!-- 継続的インテグレーションシステム -->
+    <ciManagement>
+        <system>travis-ci</system>
+        <url>https://travis-ci.org/seraphy/TextReEncoder</url>
+    </ciManagement>
+
+    <!-- 課題追跡システム -->
+    <issueManagement>
+        <url>https://github.com/seraphy/TextReEncoder/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
+    <developers>
+        <developer>
+            <id>seraphy</id>
+            <name>seraphy</name>
+            <email>seraphy@users.sourceforge.jp</email>
+            <url>http://sourceforge.jp/users/seraphy/</url>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    
     <build>
         <plugins>
+            <!-- SPRING-BOOT -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- メインJAR作成時のマニフェストの調整 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!-- SpringBootのUberJarの場合、メインjarがBOOT-INF/classesの下に配置される -->
+                            <SplashScreen-Image>BOOT-INF/classes/splash_picture.png</SplashScreen-Image>
+                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                            <Built-By>${project.developers[0].id}</Built-By>
+                            <Specification-Title>${project.name}</Specification-Title>
+                            <Specification-Version>${project.version}</Specification-Version>
+                            <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Vendor-Id>${project.organization.name}</Implementation-Vendor-Id>
+                            <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- 現在時刻からユニークなビルド番号を生成する
+            (使うか否かに関わらず、SCMの設定が必要。
+            buildNumberの連番を使う場合はローカルにプロパティファイルが作成される) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doCheck>false</doCheck>
+                    <doUpdate>true</doUpdate>
+                    <format>{0,date,yyyyMM}.{0,date,ddHHmm}</format>
+                    <items>
+                        <item>timestamp</item>
+                    </items>
+                </configuration>
             </plugin>
         </plugins>
     </build>
 
     <dependencies>
+        <!-- SPRING-BOOT -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -163,6 +280,17 @@
                                         <path>jre</path>
                                         <minVersion>1.8.0_40</minVersion>
                                     </jre>
+                                    <versionInfo>
+                                        <fileVersion>${exeFileVersion}</fileVersion>
+                                        <txtFileVersion>${project.version}.${buildNumber}</txtFileVersion>
+                                        <fileDescription>${project.artifactId} ${project.version} ${buildNumber}</fileDescription>
+                                        <copyright><![CDATA[${maven.build.timestamp} ${project.developers[0].id}]]></copyright>
+                                        <productVersion>${exeFileVersion}</productVersion>
+                                        <txtProductVersion>${project.version}</txtProductVersion>
+                                        <productName>${project.artifactId}</productName>
+                                        <internalName>${project.artifactId}</internalName>
+                                        <originalFilename>${project.artifactId}.exe</originalFilename>
+                                    </versionInfo>
                                 </configuration>
                             </execution>
                         </executions>
