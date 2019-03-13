@@ -95,29 +95,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- メインJAR作成時のマニフェストの調整 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestEntries>
-                            <!-- SpringBootのUberJarの場合、メインjarがBOOT-INF/classesの下に配置される -->
-                            <SplashScreen-Image>BOOT-INF/classes/splash_picture.png</SplashScreen-Image>
-                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
-                            <Built-By>${project.developers[0].id}</Built-By>
-                            <Specification-Title>${project.name}</Specification-Title>
-                            <Specification-Version>${project.version}</Specification-Version>
-                            <Specification-Vendor>${project.organization.name}</Specification-Vendor>
-                            <Implementation-Title>${project.name}</Implementation-Title>
-                            <Implementation-Version>${project.version}</Implementation-Version>
-                            <Implementation-Vendor-Id>${project.organization.name}</Implementation-Vendor-Id>
-                            <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>
-
             <!-- 現在時刻からユニークなビルド番号を生成する
             (使うか否かに関わらず、SCMの設定が必要。
             buildNumberの連番を使う場合はローカルにプロパティファイルが作成される) -->
@@ -142,6 +119,29 @@
                     </items>
                 </configuration>
             </plugin>
+
+            <!-- メインJAR作成時のマニフェストの調整 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!-- SpringBootのUberJarの場合、メインjarがBOOT-INF/classesの下に配置される -->
+                            <SplashScreen-Image>BOOT-INF/classes/splash_picture.png</SplashScreen-Image>
+                            <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
+                            <Built-By>${project.developers[0].id}</Built-By>
+                            <Specification-Title>${project.name}</Specification-Title>
+                            <Specification-Version>${project.version}</Specification-Version>
+                            <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Implementation-Vendor-Id>${project.organization.name}</Implementation-Vendor-Id>
+                            <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -150,36 +150,29 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <!-- SPRING-BOOTの標準のログ系(logback)を無効にする
+                    https://www.logicbig.com/tutorials/spring-framework/spring-boot/log4j2.html
+                    -->
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
+        <!-- SPRING-BOOTのログをlog4j2系に切り替える -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+
         <!-- JSR330 Support 
         Springは、これを検出すると Inject, Provider, Instanceなどを有効とする -->
         <dependency>
             <groupId>javax.inject</groupId>
             <artifactId>javax.inject</artifactId>
             <version>1</version>
-        </dependency>
-
-        <!-- SLF4j -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-
-        <!-- SLF4Jのログ実装をLog4j2にする -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-        </dependency>
-
-        <!-- LOG4J2 -->
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
         </dependency>
 
         <!--
@@ -198,6 +191,7 @@
             <artifactId>javafx-fxml</artifactId>
             <version>11</version>
         </dependency>
+
         <!--
           ControlsFX
           http://fxexperience.com/controlsfx/
@@ -224,6 +218,7 @@
             <version>1.0</version>
         </dependency>     
 
+        <!-- SPRING-BOOTのテスト -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

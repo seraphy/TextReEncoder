@@ -1,15 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+    <Properties>
+        <Property name="log_pattern">%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <PatternLayout pattern="${log_pattern}"/>
         </Console>
+        <RollingFile name="File" fileName="${sys:java.io.tmpdir}/TextReEncoder.log"
+                     filePattern="${sys:java.io.tmpdir}/TextReEncoder_%i.log">
+            <PatternLayout pattern="${log_pattern}" />
+            <Policies>
+                <OnStartupTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="2 MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="3" />
+        </RollingFile>
     </Appenders>
+
     <Loggers>
         <Logger name="jp.seraphyware" level="Debug"/>
 
         <Root level="Info">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Console" level="Info"/>
+            <AppenderRef ref="File"/>
         </Root>
     </Loggers>
 </Configuration>
