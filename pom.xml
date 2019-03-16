@@ -34,8 +34,9 @@
         実行およびビルドにはJava8が必要です。
         
         ---
-        
-        2019/1/11 Java8, Java11のビルドをProfileで切り替え
+        2019/3/16 [v1.6] Spring-BootによるJavaFX11を同梱したUberJar生成に切り替え。
+                
+        2019/1/11 [v1.5] Java8, Java11のビルドをProfileで切り替え
         Maven Wrapper導入
         Launch4jのカスタムヘッド使用
 
