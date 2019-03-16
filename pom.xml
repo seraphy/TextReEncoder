@@ -4,10 +4,22 @@
 
     <groupId>jp.seraphyware</groupId>
     <artifactId>TextReEncoder</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>TextReEncoder</name>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <start-class>jp.seraphyware.textencodechanger.Main</start-class>
+        <exeFileVersion>1.6.0.0</exeFileVersion>
+    </properties>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.1.3.RELEASE</version>
+    </parent>
 
     <description><![CDATA[
         これはJavaFX8によるGUIの「テキストファイル文字コード変換ツール」です。
@@ -22,8 +34,9 @@
         実行およびビルドにはJava8が必要です。
         
         ---
-        
-        2019/1/11 Java8, Java11のビルドをProfileで切り替え
+        2019/3/16 [v1.6] Spring-BootによるJavaFX11を同梱したUberJar生成に切り替え。
+                
+        2019/1/11 [v1.5] Java8, Java11のビルドをProfileで切り替え
         Maven Wrapper導入
         Launch4jのカスタムヘッド使用
 
@@ -74,16 +87,15 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.version>5.1.5.RELEASE</spring.version>
-        <mainClass>jp.seraphyware.textencodechanger.Main</mainClass>
-        <exeFileVersion>1.5.0.2</exeFileVersion>
-    </properties>
-
+    
     <build>
         <plugins>
+            <!-- SPRING-BOOT -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
             <!-- 現在時刻からユニークなビルド番号を生成する
             (使うか否かに関わらず、SCMの設定が必要。
             buildNumberの連番を使う場合はローカルにプロパティファイルが作成される) -->
@@ -109,55 +121,15 @@
                 </configuration>
             </plugin>
 
-            <!-- コンパイラ -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>            
-            </plugin>
-
-            <!-- ソースコードもjarにする -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.0.1</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- 単体テスト有効 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.16</version>
-            </plugin>
-
-            <!-- 依存パッケージへのクラスパスとメインクラスのあるMANIFESTをもつJARの作成 -->
+            <!-- メインJAR作成時のマニフェストの調整 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
                 <configuration>
-                    <finalName>${project.artifactId}</finalName>
                     <archive>
-                        <index>true</index>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib</classpathPrefix>
-                            <mainClass>${mainClass}</mainClass>
-                        </manifest>
                         <manifestEntries>
-                            <SplashScreen-Image>splash_picture.png</SplashScreen-Image>
+                            <!-- SpringBootのUberJarの場合、メインjarがBOOT-INF/classesの下に配置される -->
+                            <SplashScreen-Image>BOOT-INF/classes/splash_picture.png</SplashScreen-Image>
                             <Build-Timestamp>${maven.build.timestamp}</Build-Timestamp>
                             <Built-By>${project.developers[0].id}</Built-By>
                             <Specification-Title>${project.name}</Specification-Title>
@@ -175,20 +147,25 @@
     </build>
 
     <dependencies>
-        <!-- SPRING FRAMEWORK 5.1 (DI)
-         v5以降はJava8以降が必須。
-        -->
+        <!-- SPRING-BOOT -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <version>${spring.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
             <exclusions>
                 <exclusion>
-                    <!-- Commons-Loggingのかわりに, SLF4Jを使うため -->
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
+                    <!-- SPRING-BOOTの標準のログ系(logback)を無効にする
+                    https://www.logicbig.com/tutorials/spring-framework/spring-boot/log4j2.html
+                    -->
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        
+        <!-- SPRING-BOOTのログをlog4j2系に切り替える -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
         </dependency>
 
         <!-- JSR330 Support 
@@ -199,47 +176,55 @@
             <version>1</version>
         </dependency>
 
-        <!-- SLF4j -->
+        <!--
+          OpenJFX
+          https://wiki.openjdk.java.net/display/OpenJFX/Main
+
+          Java11からJavaFXはJREに含まれないため、ライブラリとして組み込み必要がある
+        -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.26</version>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>11</version>
         </dependency>
 
-        <!-- SLF4Jのログ実装をLog4j2にする -->
+        <!--
+          ControlsFX
+          http://fxexperience.com/controlsfx/
+        -->
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.11.2</version>
+            <groupId>org.controlsfx</groupId>
+            <artifactId>controlsfx</artifactId>
+            <!-- <version>8.20.8</version>
+                ※ Java9以降、アクセス不可能になった内部クラスに依存するため
+                ControlsFXのSpreadsheetViewなどは削除されている。
+                本アプリは使っていないので、9.0.0にしてもJava8,Java11どちらでも問題ない
+                https://bitbucket.org/controlsfx/controlsfx/issues/780/controlsfx-should-support-java-9
+                https://groups.google.com/d/msg/controlsfx-dev/5pMt_w44VIU/IdU6jC1mDwAJ
+            -->
+            <version>9.0.0</version>
         </dependency>
 
-        <!-- LOG4J2 -->
+        <!-- JSR-250 APIの明示的な組み込み
+          https://mvnrepository.com/artifact/javax.annotation/jsr250-api
+        -->
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-api</artifactId>
-            <version>2.11.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.11.2</version>
-        </dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>jsr250-api</artifactId>
+            <version>1.0</version>
+        </dependency>     
 
-        <!-- TestNG -->
+        <!-- SPRING-BOOTのテスト -->
         <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.1</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- SpringTest -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-test</artifactId>
-            <version>${spring.version}</version>
-            <scope>test</scope>
-        </dependency>
+        </dependency>     
     </dependencies>
 
     <reporting>
@@ -296,51 +281,21 @@
             </plugin>
         </plugins>
     </reporting>
-    
+
     <profiles>
         <profile>
-            <id>java8</id>
+            <id>launch4j</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <os>
+                    <family>Windows</family>
+                </os>
             </activation>
-            <dependencies>
-                <!--
-                  ControlsFX
-                  http://fxexperience.com/controlsfx/
-                -->
-                <dependency>
-                    <groupId>org.controlsfx</groupId>
-                    <artifactId>controlsfx</artifactId>
-                    <version>8.40.14</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
-                    <!--
-                        パッケージ時, 単一の実行可能jarを作成するために依存ライブラリを展開する.
-                        packageフェーズでmakejarのexecutionよりも先行させる必要がある.(pom上で前に書けば良い)
-                    -->
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>2.10</version>
-                        <executions>
-                            <execution>
-                                <id>unpack-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>unpack-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <includeScope>runtime</includeScope>
-                                    <excludeGroupIds>junit,org.mockito,org.hamcrest</excludeGroupIds>
-                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <!-- Launch4jによるjarファイルのexe化を行う. http://launch4j.sourceforge.net/docs.html -->
+                        <!-- Launch4jによるjarファイルのexe化を行う.
+                            http://launch4j.sourceforge.net/docs.html
+                        -->
                         <groupId>com.akathist.maven.plugins.launch4j</groupId>
                         <artifactId>launch4j-maven-plugin</artifactId>
                         <version>1.7.25</version>
@@ -353,9 +308,9 @@
                                 </goals>
                                 <configuration>
                                     <headerType>gui</headerType>
-                                    <outfile>target/${project.artifactId}.exe</outfile>
-                                    <jar>target/${project.artifactId}.jar</jar>
-                                    <errTitle>Failed to execute the ${project.artifactId}</errTitle>
+                                    <outfile>target/${project.build.finalName}.exe</outfile>
+                                    <jar>target/${project.build.finalName}.jar</jar>
+                                    <errTitle>Failed to execute the ${project.build.finalName}</errTitle>
                                     <icon>icon.ico</icon>
                                     <!-- JAVA_HOMEがみつからない場合は手動選択できるようにするカスタムヘッド -->
                                     <objs>
@@ -375,8 +330,6 @@
                                     <jre>
                                         <path>jre</path>
                                         <minVersion>1.8.0_40</minVersion>
-                                        <!-- JavaFX8は、Java11以降はJREに含まれないため、Java8までとする -->
-                                        <maxVersion>1.8.999</maxVersion>
                                     </jre>
                                     <versionInfo>
                                         <fileVersion>${exeFileVersion}</fileVersion>
@@ -384,210 +337,12 @@
                                         <fileDescription>${project.artifactId} ${project.version} ${buildNumber}</fileDescription>
                                         <copyright><![CDATA[${maven.build.timestamp} ${project.developers[0].id}]]></copyright>
                                         <productVersion>${exeFileVersion}</productVersion>
-                                        <txtProductVersion>${project.version} (for Java8)</txtProductVersion>
+                                        <txtProductVersion>${project.version}</txtProductVersion>
                                         <productName>${project.artifactId}</productName>
                                         <internalName>${project.artifactId}</internalName>
                                         <originalFilename>${project.artifactId}.exe</originalFilename>
                                     </versionInfo>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <!-- Java11でのビルドを行う。 Java11にはJavaFXがないため明示的にライブラリとして参照する。
-            生成物はJavaFXを含むライブラリをクラスパスを通したlibフォルダに格納しており、java8以降で実行できる。 -->
-            <id>java11</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>[11</jdk>
-            </activation>
-            <dependencies>
-                <!--
-                  OpenJFX
-                  https://wiki.openjdk.java.net/display/OpenJFX/Main
-
-                  Java11からJavaFXはJREに含まれないため、ライブラリとして組み込み必要がある
-                -->
-                <dependency>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-controls</artifactId>
-                    <version>11.0.2</version>
-                </dependency>
-                <dependency>
-                    <groupId>org.openjfx</groupId>
-                    <artifactId>javafx-fxml</artifactId>
-                    <version>11.0.2</version>
-                </dependency>
-                <!--
-                  ControlsFX
-                  http://fxexperience.com/controlsfx/
-                -->
-                <dependency>
-                    <groupId>org.controlsfx</groupId>
-                    <artifactId>controlsfx</artifactId>
-                    <!-- <version>8.20.8</version>
-                        ※ Java9以降、アクセス不可能になった内部クラスに依存するため
-                        ControlsFXのSpreadsheetViewなどは削除されている。
-                        本アプリは使っていないので、9.0.0にしてもJava8,Java11どちらでも問題ない
-                        https://bitbucket.org/controlsfx/controlsfx/issues/780/controlsfx-should-support-java-9
-                        https://groups.google.com/d/msg/controlsfx-dev/5pMt_w44VIU/IdU6jC1mDwAJ
-                    -->
-                    <version>9.0.0</version>
-                </dependency>
-
-                <!-- JSR-250 APIの明示的な組み込み
-                  https://mvnrepository.com/artifact/javax.annotation/jsr250-api
-                -->
-                <dependency>
-                    <groupId>javax.annotation</groupId>
-                    <artifactId>jsr250-api</artifactId>
-                    <version>1.0</version>
-                </dependency>        
-            </dependencies>
-            <build>
-                <plugins>
-                    <!-- 依存するパッケージをlibフォルダに出力する -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.1.1</version>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <includeScope>runtime</includeScope>
-                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                                    <overWriteReleases>false</overWriteReleases>
-                                    <overWriteSnapshots>false</overWriteSnapshots>
-                                    <overWriteIfNewer>true</overWriteIfNewer>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- リソース中のpngをコピーする -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>copy-resources</id>
-                                <phase>validate</phase>
-                                <goals>
-                                  <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>src/main/resources</directory>
-                                            <includes>
-                                                <include>splash_picture.png</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <!-- Launch4jによるjarファイルのexe化を行う. http://launch4j.sourceforge.net/docs.html -->
-                        <groupId>com.akathist.maven.plugins.launch4j</groupId>
-                        <artifactId>launch4j-maven-plugin</artifactId>
-                        <version>1.7.25</version>
-                        <executions>
-                            <execution>
-                                <id>l4j-gui</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>launch4j</goal>
-                                </goals>
-                                <configuration>
-                                    <headerType>gui</headerType>
-                                    <outfile>target/${project.artifactId}.exe</outfile>
-                                    <!-- Launch4jプラグインはjarを空名にするか、もしくは指定しないと暗黙で成果物のjar名を設定してしまうため、
-                                    あえて実在しないダミーのjar名を指定しておく。これがLaunch4jで指定されるクラスパスの最初に付与される。
-                                    (launch4j自身は dontWrapJar=True の場合はクラスパスさえ指定していればjarがなくても問題ないのだが) -->
-                                    <jar>dummy.jar</jar>
-                                    <!-- <jar>${project.artifactId}.jar</jar> -->
-                                    <!-- 外部jarのランチャとしてexeを生成する。jarはラップしない。 -->
-                                    <dontWrapJar>true</dontWrapJar>
-                                    <errTitle>Failed to execute the ${project.artifactId}</errTitle>
-                                    <icon>icon.ico</icon>
-                                    <!-- JAVA_HOMEがみつからない場合は手動選択できるようにするカスタムヘッド -->
-                                    <objs>
-                                        <obj>src/Launch4JStub/w32api/crt2.o</obj>
-                                        <obj>src/Launch4JStub/head/head.o</obj>
-                                        <obj>src/Launch4JStub/head/guihead.o</obj>
-                                    </objs>
-                                    <libs>
-                                        <lib>src/Launch4jStub/w32api/libmingw32.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libgcc.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libmsvcrt.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libkernel32.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libuser32.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libadvapi32.a</lib>
-                                        <lib>src/Launch4jStub/w32api/libshell32.a</lib>
-                                    </libs>
-                                    <classPath>
-                                        <mainClass>${mainClass}</mainClass>
-                                        <!-- Launch4j側でクラスパスを通す。ライブラリはlib/*にあると想定 -->
-                                        <addDependencies>true</addDependencies>
-                                        <jarLocation>lib</jarLocation>
-                                        <!-- 依存ライブラリの"後ろ"に本体jarを付与する。
-                                        javafx11のロード順序で本体が最後に読まれないと、javafx関連のjar, dll類が正しく読み込まれないため -->
-                                        <postCp>${project.artifactId}.jar</postCp>
-                                    </classPath>
-                                    <jre>
-                                        <path>jre</path>
-                                        <!-- システムにインストールされているJRE探索を行うにはminVersionの指定が必須 -->
-                                        <minVersion>8</minVersion>
-                                        <opts>
-                                            <opt>-splash:splash_picture.png</opt>
-                                        </opts>
-                                    </jre>
-                                    <versionInfo>
-                                        <fileVersion>${exeFileVersion}</fileVersion>
-                                        <txtFileVersion>${project.version}.${buildNumber}</txtFileVersion>
-                                        <fileDescription>${project.artifactId} ${project.version} ${buildNumber}</fileDescription>
-                                        <copyright><![CDATA[${maven.build.timestamp} ${project.developers[0].id}]]></copyright>
-                                        <productVersion>${exeFileVersion}</productVersion>
-                                        <txtProductVersion>${project.version} (for Java11 or above)</txtProductVersion>
-                                        <productName>${project.artifactId}</productName>
-                                        <internalName>${project.artifactId}</internalName>
-                                        <originalFilename>${project.artifactId}.exe</originalFilename>
-                                    </versionInfo>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <!-- 配布用zipの作成 -->
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <configuration>
-                            <finalName>${project.artifactId}-${project.version}-java11</finalName>
-                            <!-- zipの名前にassemblyのidはつけない -->
-                            <appendAssemblyId>false</appendAssemblyId>
-                            <descriptors>
-                                <descriptor>src/assembly/assembly.xml</descriptor>
-                            </descriptors>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>

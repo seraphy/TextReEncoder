@@ -3,60 +3,27 @@ package jp.seraphyware.textencodechanger.services;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.regex.Pattern;
+import jp.seraphyware.textencodechanger.UnitTestConfiguration;
 import jp.seraphyware.textencodechanger.services.FileWalkService.FileNameMatcher;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * FileWalkServiceのTestNGによるテスト
  * 
  * @author seraphy
  */
-@ContextConfiguration("file:src/test/java/testApplicationContext.xml")
-public class FileWalkServiceTest extends AbstractTestNGSpringContextTests {
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {UnitTestConfiguration.class})
+public class FileWalkServiceTest {
     
     @Autowired
     private FileWalkService service;
     
-    /**
-     * クラス準備
-     * @throws Exception 
-     */
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    /**
-     * クラスの後始末
-     * @throws Exception 
-     */
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
-    /**
-     * テスト準備
-     * @throws Exception 
-     */
-    @BeforeMethod
-    public void setUpMethod() throws Exception {
-    }
-
-    /**
-     * テストの後始末
-     * @throws Exception 
-     */
-    @AfterMethod
-    public void tearDownMethod() throws Exception {
-    }
-
     /**
      * ファイルパターンのテスト
      */

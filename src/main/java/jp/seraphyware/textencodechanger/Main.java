@@ -1,15 +1,20 @@
 package jp.seraphyware.textencodechanger;
 
+import javafx.application.Application;
+
 /**
- * JavaFXアプリを起動するためだけのエントリポイント。
- * mainメソッドのクラスをロードするときに javafx.application.Application を
- * 継承していると、モジュールロードを試行してクラスロードに失敗するため、別クラスにする必要がある。
- * https://torutk.hatenablog.jp/entry/2018/12/01/215113
- * http://mail.openjdk.java.net/pipermail/openjfx-dev/2018-June/021980.html
+ * エントリポイント
+ * @author seraphy
  */
 public class Main {
     
     public static void main(String[] args) {
-        javafx.application.Application.launch(MainApp.class, args);
+        // JavaFX11の関連jarをクラスパスで通した場合、
+        // Application派生クラス内のmainメソッドをエントリポイントにすると
+        // Applicationクラスの解決のためにJavaFXモジュールを探索して発見できず
+        // エラーで終了してしまう問題があるため、Application派生クラスの外で
+        // mainを呼び出すようにする。
+        System.setProperty("java.awt.headless", "false");
+        Application.launch(MainApp.class, args);
     }
 }

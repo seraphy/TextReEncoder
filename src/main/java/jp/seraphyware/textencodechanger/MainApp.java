@@ -8,17 +8,15 @@ import javax.swing.SwingUtilities;
 import jp.seraphyware.textencodechanger.ui.MainWndController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.context.annotation.
-        AnnotationConfigApplicationContext;
-
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 /**
  * アプリケーションのエントリ.
  *
  * @author seraphy
  */
+@SpringBootApplication
 public class MainApp extends Application {
 
     /**
@@ -29,13 +27,7 @@ public class MainApp extends Application {
     /**
      * Springのコンテキスト.
      */
-    private AnnotationConfigApplicationContext context;
-    
-    /**
-     * メインウィンドウ
-     */
-    @Autowired
-    private MainWndController mainWindow;
+    private ConfigurableApplicationContext context;
 
     /**
      * JavaFXアプリケーションの初期化時に呼び出される.
@@ -47,20 +39,8 @@ public class MainApp extends Application {
 
         // Springのコンテキストを作成する.
         // JavaFXのlaunchにより、JavaFXスレッド上でコンテキストを構築する.
-        context = new AnnotationConfigApplicationContext();
-        //context.register(MainAppConfiguration.class); // 明示的なBeanの定義による方法
-        context.scan("jp.seraphyware"); // スキャンによる方法
-        context.scan("jp.seraphyware.services"); // スキャンによる方法
-        context.scan("jp.seraphyware.ui"); // スキャンによる方法
-        context.refresh();
-        
-        // このインスタンスを管理ビーンにする
-        // 参考: https://ksby.hatenablog.com/entry/2016/08/14/185055
-        AutowireCapableBeanFactory beanFactory = context.getAutowireCapableBeanFactory();
-        beanFactory.autowireBean(this);
-        beanFactory.initializeBean(this, getClass().getSimpleName());
-        ((ConfigurableListableBeanFactory) context.getBeanFactory())
-                .registerSingleton(getClass().getSimpleName(), this);
+        String[] args = getParameters().getRaw().toArray(new String[0]);
+        context = SpringApplication.run(MainApp.class, args);
     }
 
     /**
@@ -74,6 +54,7 @@ public class MainApp extends Application {
         log.info("★MainApp::start");
 
         // メインウィンドウの表示
+        MainWndController mainWindow = context.getBean(MainWndController.class);
         Stage stg = mainWindow.getStage();
         stg.show();
         
@@ -103,17 +84,5 @@ public class MainApp extends Application {
         log.info("★MainApp::stop");
         // コンテキストを終了する.
         context.close();
-    }
-    
-    /**
-     * The main() method is ignored in correctly deployed JavaFX application.
-     * main() serves only as fallback in case the application can not be
-     * launched through deployment artifacts, e.g., in IDEs with limited FX
-     * support. NetBeans ignores main().
-     *
-     * @param args the command line arguments
-     */
-    public static void main(final String[] args) {
-        launch(args);
     }
 }
