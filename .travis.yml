@@ -7,7 +7,7 @@ env:
       - MAVEN_OPTS="-Xmx128m"
 
 jdk:
-  - oraclejdk8
+  - openjdk8
   - openjdk11
 
 install:
