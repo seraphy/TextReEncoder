@@ -1,4 +1,4 @@
-テキストファイル文字コード変換ツール(TextReEncoder) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+テキストファイル文字コード変換ツール(TextReEncoder) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Build Status](https://travis-ci.com/seraphy/TextReEncoder.svg?branch=master)](https://travis-ci.com/seraphy/TextReEncoder)
 =================================================
 指定したディレクトリ以下にあるテキストファイルの文字コードを一括変換するGUIツールです。
 
