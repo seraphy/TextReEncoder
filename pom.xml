@@ -13,6 +13,8 @@
         <java.version>1.8</java.version>
         <start-class>jp.seraphyware.textencodechanger.Main</start-class>
         <exeFileVersion>1.6.0.0</exeFileVersion>
+        <!-- SpringBoot2.1.3の標準のlog4j2のバージョンを上書きする -->
+        <log4j2.version>2.17.1</log4j2.version>
     </properties>
 
     <parent>
